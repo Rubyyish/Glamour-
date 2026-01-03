@@ -8,6 +8,7 @@ const HomePage = () => {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
   const [isScrolled, setIsScrolled] = useState(false);
+  const [showUserMenu, setShowUserMenu] = useState(false);
 
   useEffect(() => {
     // Handle scroll effect for navigation
@@ -15,8 +16,20 @@ const HomePage = () => {
       setIsScrolled(window.scrollY > 50);
     };
 
+    // Close menu when clicking outside
+    const handleClickOutside = (event) => {
+      if (!event.target.closest('.user-menu-container')) {
+        setShowUserMenu(false);
+      }
+    };
+
     window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+    document.addEventListener('mousedown', handleClickOutside);
+    
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
   }, []);
 
   const handleLogout = () => {
@@ -43,9 +56,56 @@ const HomePage = () => {
             <a href="#about">About</a>
           </div>
           <div className="nav-right">
-            <button onClick={() => navigate('/profile')} className="user-name-btn">
-              {user?.name}
-            </button>
+            <div className="user-menu-container">
+              <button 
+                onClick={() => setShowUserMenu(!showUserMenu)} 
+                className="user-name-btn"
+              >
+                {user?.name}
+                <svg 
+                  width="12" 
+                  height="12" 
+                  viewBox="0 0 12 12" 
+                  fill="currentColor"
+                  style={{ marginLeft: '6px', transition: 'transform 0.3s' }}
+                  className={showUserMenu ? 'rotate-180' : ''}
+                >
+                  <path d="M6 9L1 4h10z"/>
+                </svg>
+              </button>
+              
+              {showUserMenu && (
+                <div className="user-dropdown-menu">
+                  <button 
+                    onClick={() => {
+                      navigate('/profile');
+                      setShowUserMenu(false);
+                    }}
+                    className="dropdown-item"
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                      <circle cx="12" cy="7" r="4"/>
+                    </svg>
+                    Profile
+                  </button>
+                  <button 
+                    onClick={() => {
+                      navigate('/wardrobe');
+                      setShowUserMenu(false);
+                    }}
+                    className="dropdown-item"
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <rect x="3" y="3" width="18" height="18" rx="2"/>
+                      <path d="M9 3v18"/>
+                      <path d="M15 3v18"/>
+                    </svg>
+                    Wardrobe
+                  </button>
+                </div>
+              )}
+            </div>
             <button onClick={handleLogout} className="logout-btn">Sign Out</button>
           </div>
         </div>

@@ -8,6 +8,8 @@ import SignInPage from "./Components/SigninPage/SigninPage.jsx";
 import ForgotPassword from "./Components/ForgotPassword/ForgotPassword.jsx";
 import HomePage from "./Components/HomePage/HomePage.jsx";
 import ProfilePage from "./Components/ProfilePage/ProfilePage.jsx";
+import Wardrobe from "./Components/Wardrobe/Wardrobe.jsx";
+import WardrobeDetail from "./Components/WardrobeDetail/WardrobeDetail.jsx";
 import AuthCallback from "./Components/AuthCallback/AuthCallback.jsx";
 import { useAuth } from "./context/AuthContext.jsx";
 
@@ -50,6 +52,8 @@ const App = () => {
         <Route path="/auth/callback" element={<AuthCallback />} />
         <Route path="/home" element={isAuthenticated ? <HomePage /> : <Navigate to="/login" />} />
         <Route path="/profile" element={isAuthenticated ? <ProfilePage /> : <Navigate to="/login" />} />
+        <Route path="/wardrobe" element={isAuthenticated ? <Wardrobe /> : <Navigate to="/login" />} />
+        <Route path="/wardrobe/:id" element={isAuthenticated ? <WardrobeDetail /> : <Navigate to="/login" />} />
         <Route path="/" element={<Navigate to={isAuthenticated ? "/home" : "/login"} />} />
       </Routes>
       

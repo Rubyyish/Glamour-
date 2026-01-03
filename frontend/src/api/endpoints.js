@@ -39,6 +39,19 @@ export const ENDPOINTS = {
     DELETE: (id) => `/orders/${id}`,
     GET_USER_ORDERS: (userId) => `/orders/user/${userId}`,
   },
+
+  // Wardrobes
+  WARDROBE: {
+    GET_ALL: '/wardrobe',
+    GET_BY_ID: (id) => `/wardrobe/${id}`,
+    CREATE: '/wardrobe',
+    UPDATE: (id) => `/wardrobe/${id}`,
+    DELETE: (id) => `/wardrobe/${id}`,
+    ADD_ITEM: (id) => `/wardrobe/${id}/items`,
+    REMOVE_ITEM: (id, itemId) => `/wardrobe/${id}/items/${itemId}`,
+    UPDATE_ITEM: (id, itemId) => `/wardrobe/${id}/items/${itemId}`,
+    TOGGLE_FAVORITE: (id, itemId) => `/wardrobe/${id}/items/${itemId}/favorite`,
+  },
 };
 
 export default ENDPOINTS;
