@@ -1,0 +1,488 @@
+.ar-tryon-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: #000;
+  z-index: 10000;
+}
+
+.ar-tryon-container {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: #000;
+}
+
+.ar-tryon-header {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px;
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.7), transparent);
+  z-index: 10;
+}
+
+.ar-tryon-header h2 {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 600;
+  color: #fff;
+}
+
+.ar-close-btn {
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  font-size: 32px;
+  cursor: pointer;
+  color: #fff;
+  padding: 0;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s;
+  border-radius: 50%;
+  backdrop-filter: blur(10px);
+}
+
+.ar-close-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.ar-item-info {
+  position: absolute;
+  top: 80px;
+  left: 20px;
+  right: 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 16px;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(10px);
+  border-radius: 12px;
+  z-index: 10;
+}
+
+.ar-item-thumbnail {
+  width: 50px;
+  height: 50px;
+  object-fit: cover;
+  border-radius: 8px;
+}
+
+.ar-item-info h3 {
+  margin: 0 0 4px 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #fff;
+}
+
+.ar-item-info p {
+  margin: 0;
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+/* Texture Selector */
+.ar-texture-selector {
+  position: absolute;
+  top: 150px;
+  left: 20px;
+  right: 20px;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(10px);
+  border-radius: 12px;
+  padding: 16px;
+  z-index: 10;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.texture-selector-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.texture-selector-header label {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.9);
+  font-weight: 500;
+}
+
+.texture-upload-trigger-btn {
+  background: rgba(255, 255, 255, 0.2);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.texture-upload-trigger-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+.texture-options {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 4px 0;
+  scroll-behavior: smooth;
+}
+
+.texture-option {
+  background: rgba(255, 255, 255, 0.1);
+  border: 2px solid transparent;
+  padding: 6px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 12px;
+  white-space: nowrap;
+  transition: all 0.3s;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+  position: relative;
+}
+
+.texture-option:hover {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.texture-option.active {
+  background: rgba(66, 133, 244, 0.3);
+  border-color: #4285f4;
+  color: #fff;
+}
+
+.texture-option img {
+  width: 40px;
+  height: 40px;
+  border-radius: 4px;
+  object-fit: cover;
+}
+
+.ar-camera-container {
+  position: relative;
+  flex: 1;
+  background: #000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.ar-video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.ar-video.active {
+  opacity: 1;
+}
+
+.ar-loading,
+.ar-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  color: #fff;
+  padding: 40px;
+  text-align: center;
+}
+
+.ar-loading .spinner {
+  width: 48px;
+  height: 48px;
+  border: 4px solid rgba(255, 255, 255, 0.3);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.spinner-small {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  display: inline-block;
+}
+
+.ar-error svg {
+  color: #ff4444;
+}
+
+.retry-btn {
+  background: #fff;
+  color: #000;
+  border: none;
+  padding: 10px 24px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: background 0.3s;
+}
+
+.retry-btn:hover {
+  background: #f0f0f0;
+}
+
+.ar-overlay-guide {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+.guide-frame {
+  position: relative;
+  width: 300px;
+  height: 400px;
+  border: 2px solid rgba(255, 255, 255, 0.5);
+  border-radius: 12px;
+}
+
+.corner {
+  position: absolute;
+  width: 30px;
+  height: 30px;
+  border: 3px solid #fff;
+}
+
+.corner.top-left {
+  top: -2px;
+  left: -2px;
+  border-right: none;
+  border-bottom: none;
+  border-radius: 12px 0 0 0;
+}
+
+.corner.top-right {
+  top: -2px;
+  right: -2px;
+  border-left: none;
+  border-bottom: none;
+  border-radius: 0 12px 0 0;
+}
+
+.corner.bottom-left {
+  bottom: -2px;
+  left: -2px;
+  border-right: none;
+  border-top: none;
+  border-radius: 0 0 0 12px;
+}
+
+.corner.bottom-right {
+  bottom: -2px;
+  right: -2px;
+  border-left: none;
+  border-top: none;
+  border-radius: 0 0 12px 0;
+}
+
+.guide-text {
+  text-align: center;
+  color: #fff;
+  font-size: 14px;
+  margin-top: 16px;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.ar-captured-container {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #000;
+}
+
+.ar-captured-image {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+}
+
+.ar-controls {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  gap: 12px;
+  padding: 20px 24px;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.8), transparent);
+  flex-wrap: wrap;
+  z-index: 10;
+}
+
+.ar-controls button {
+  flex: 1;
+  min-width: 140px;
+  padding: 14px 20px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: none;
+  backdrop-filter: blur(10px);
+}
+
+.ar-capture-btn {
+  background: #000;
+  color: #fff;
+}
+
+.ar-capture-btn:hover:not(:disabled) {
+  background: #333;
+}
+
+.ar-capture-btn:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+
+.ar-cancel-btn {
+  background: #f0f0f0;
+  color: #000;
+}
+
+.ar-cancel-btn:hover {
+  background: #e0e0e0;
+}
+
+.ar-download-btn {
+  background: #000;
+  color: #fff;
+}
+
+.ar-download-btn:hover {
+  background: #333;
+}
+
+.ar-retake-btn {
+  background: #f0f0f0;
+  color: #000;
+}
+
+.ar-retake-btn:hover {
+  background: #e0e0e0;
+}
+
+.ar-done-btn {
+  background: #000;
+  color: #fff;
+}
+
+.ar-done-btn:hover {
+  background: #333;
+}
+
+.ar-tips {
+  position: absolute;
+  bottom: 100px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 12px 20px;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(10px);
+  border-radius: 20px;
+  text-align: center;
+  z-index: 10;
+  max-width: 90%;
+}
+
+.ar-tips p {
+  margin: 0;
+  font-size: 13px;
+  color: #fff;
+}
+
+@media (max-width: 768px) {
+  .ar-tryon-header {
+    padding: 16px 20px;
+  }
+
+  .ar-tryon-header h2 {
+    font-size: 18px;
+  }
+
+  .ar-item-info {
+    top: 70px;
+    left: 16px;
+    right: 16px;
+    padding: 10px 14px;
+  }
+
+  .ar-item-thumbnail {
+    width: 40px;
+    height: 40px;
+  }
+
+  .ar-item-info h3 {
+    font-size: 14px;
+  }
+
+  .ar-item-info p {
+    font-size: 12px;
+  }
+
+  .guide-frame {
+    width: 250px;
+    height: 350px;
+  }
+
+  .ar-controls {
+    padding: 16px 20px;
+    gap: 8px;
+  }
+
+  .ar-controls button {
+    min-width: 100px;
+    padding: 12px 16px;
+    font-size: 13px;
+  }
+
+  .ar-tips {
+    bottom: 90px;
+    font-size: 12px;
+  }
+}
