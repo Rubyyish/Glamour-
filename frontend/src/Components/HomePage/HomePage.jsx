@@ -50,10 +50,10 @@ const HomePage = () => {
         <div className="nav-content">
           <div className="logo">GLAMOURÉ</div>
           <div className="nav-center">
-            <a href="#collections">Collections</a>
+            <button onClick={() => navigate('/collections')} className="nav-link-btn">Collections</button>
             <a href="#ar-tryon">AR Try-On</a>
             <a href="#technology">Technology</a>
-            <a href="#about">About</a>
+            <button onClick={() => navigate('/about')} className="nav-link-btn">About</button>
           </div>
           <div className="nav-right">
             <div className="user-menu-container">
@@ -103,6 +103,21 @@ const HomePage = () => {
                     </svg>
                     Wardrobe
                   </button>
+                  {user?.role === 'admin' && (
+                    <button 
+                      onClick={() => {
+                        navigate('/admin');
+                        setShowUserMenu(false);
+                      }}
+                      className="dropdown-item admin-item"
+                    >
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+                        <path d="M2 17l10 5 10-5M2 12l10 5 10-5"/>
+                      </svg>
+                      Admin Panel
+                    </button>
+                  )}
                 </div>
               )}
             </div>
@@ -113,6 +128,13 @@ const HomePage = () => {
 
       {/* Hero Section - Clean & Minimal */}
       <section className="hero-minimal">
+        <div className="hero-video-background">
+          <video autoPlay loop muted playsInline className="hero-video">
+            <source src="/videos/hero-video.mp4" type="video/mp4" />
+            Your browser does not support the video tag.
+          </video>
+          <div className="hero-video-overlay"></div>
+        </div>
         <div className="hero-minimal-content">
           <p className="hero-subtitle">Introducing AR Fashion</p>
           <h1 className="hero-title">
@@ -125,7 +147,7 @@ const HomePage = () => {
           </p>
           <div className="hero-cta">
             <button className="btn-primary-minimal">Start AR Experience</button>
-            <a href="#collections" className="btn-secondary-minimal">Explore Collections</a>
+            <button onClick={() => navigate('/collections')} className="btn-secondary-minimal">Explore Collections</button>
           </div>
         </div>
       </section>
@@ -204,30 +226,30 @@ const HomePage = () => {
       <section className="collections-minimal" id="collections">
         <div className="collections-header-minimal">
           <h2>Collections</h2>
-          <a href="#" className="view-all-minimal">View All →</a>
+          <button onClick={() => navigate('/collections')} className="view-all-minimal">View All →</button>
         </div>
         <div className="collections-grid-minimal">
-          <div className="collection-item">
+          <div className="collection-item" onClick={() => navigate('/category/formal-elegance')}>
             <div className="collection-image">
-              <img src="https://images.unsplash.com/photo-1506629905607-d405b7a82d42?w=600&q=80" alt="Formal" />
+              <img src="/images/formal-elegance.jpg" alt="Formal" />
             </div>
             <div className="collection-details">
               <h3>Formal Elegance</h3>
               <p>18 Items</p>
             </div>
           </div>
-          <div className="collection-item">
+          <div className="collection-item" onClick={() => navigate('/category/casual-comfort')}>
             <div className="collection-image">
-              <img src="https://images.unsplash.com/photo-1551698618-1dfe5d97d256?w=600&q=80" alt="Casual" />
+              <img src="/images/casual-comfort.jpg" alt="Casual" />
             </div>
             <div className="collection-details">
               <h3>Casual Comfort</h3>
               <p>24 Items</p>
             </div>
           </div>
-          <div className="collection-item">
+          <div className="collection-item" onClick={() => navigate('/category/accessories')}>
             <div className="collection-image">
-              <img src="https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=600&q=80" alt="Accessories" />
+              <img src="/images/accessories.jpg" alt="Accessories" />
             </div>
             <div className="collection-details">
               <h3>Accessories</h3>
@@ -241,7 +263,7 @@ const HomePage = () => {
       <section className="newsletter-section" id="technology">
         <div className="newsletter-content">
           <h2>Stay Updated</h2>
-          <p>Subscribe to receive updates on new arrivals and exclusive offers.</p>
+          <p>Subscribe to receive updates on new fits and accessories.</p>
           <div className="newsletter-form">
             <input type="email" placeholder="Enter your email" />
             <button>Subscribe</button>

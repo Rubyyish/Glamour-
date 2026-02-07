@@ -17,8 +17,11 @@ router.post('/register', async (req, res) => {
       return res.status(400).json({ message: 'User already exists' });
     }
 
+    // Check if this is the admin email
+    const role = email === process.env.ADMIN_EMAIL ? 'admin' : 'user';
+
     // Create new user
-    const user = new User({ name, email, password, authProvider: 'local' });
+    const user = new User({ name, email, password, authProvider: 'local', role });
     await user.save();
 
     // Generate JWT token
@@ -35,7 +38,8 @@ router.post('/register', async (req, res) => {
         id: user._id,
         name: user.name,
         email: user.email,
-        profilePicture: user.profilePicture
+        profilePicture: user.profilePicture,
+        role: user.role
       }
     });
   } catch (error) {
@@ -81,7 +85,8 @@ router.post('/login', async (req, res) => {
         id: user._id,
         name: user.name,
         email: user.email,
-        profilePicture: user.profilePicture
+        profilePicture: user.profilePicture,
+        role: user.role
       }
     });
   } catch (error) {
@@ -104,8 +109,17 @@ router.get('/google/callback',
       { expiresIn: '7d' }
     );
 
-    // Redirect to frontend with token
-    res.redirect(`${process.env.FRONTEND_URL}/auth/callback?token=${token}&name=${encodeURIComponent(req.user.name)}`);
+    // Redirect to frontend with token and user data
+    const userData = encodeURIComponent(JSON.stringify({
+      id: req.user._id,
+      name: req.user.name,
+      email: req.user.email,
+      profilePicture: req.user.profilePicture,
+      authProvider: req.user.authProvider,
+      role: req.user.role
+    }));
+
+    res.redirect(`${process.env.FRONTEND_URL}/auth/callback?token=${token}&user=${userData}`);
   }
 );
 

@@ -44,6 +44,7 @@ app.get('/', (req, res) => {
 // Import routes
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/wardrobe', require('./routes/wardrobe'));
+app.use('/api/admin', require('./routes/admin'));
 
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, '127.0.0.1', () => {

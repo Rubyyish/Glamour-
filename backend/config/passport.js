@@ -21,7 +21,7 @@ passport.deserializeUser(async (id, done) => {
 passport.use(new GoogleStrategy({
   clientID: process.env.GOOGLE_CLIENT_ID,
   clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-  callbackURL: '/api/auth/google/callback'
+  callbackURL: `${process.env.BACKEND_URL || 'http://localhost:5001'}/api/auth/google/callback`
 }, async (accessToken, refreshToken, profile, done) => {
   try {
     // Check if user already exists
@@ -43,13 +43,17 @@ passport.use(new GoogleStrategy({
       return done(null, user);
     }
 
+    // Check if this is the admin email
+    const role = profile.emails[0].value === process.env.ADMIN_EMAIL ? 'admin' : 'user';
+
     // Create new user
     user = new User({
       name: profile.displayName,
       email: profile.emails[0].value,
       googleId: profile.id,
       profilePicture: profile.photos[0]?.value,
-      authProvider: 'google'
+      authProvider: 'google',
+      role
     });
 
     await user.save();

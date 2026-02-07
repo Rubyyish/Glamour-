@@ -11,15 +11,17 @@ const AuthCallback = () => {
     const handleCallback = async () => {
       const params = new URLSearchParams(window.location.search);
       const token = params.get('token');
-      const name = params.get('name');
+      const userParam = params.get('user');
 
-      if (token && name) {
+      if (token && userParam) {
         try {
+          // Parse user data
+          const user = JSON.parse(decodeURIComponent(userParam));
+          
           // Store token
           localStorage.setItem('token', token);
           
-          // Create user object
-          const user = { name };
+          // Store user data
           localStorage.setItem('user', JSON.stringify(user));
           
           // Update auth context
@@ -27,7 +29,7 @@ const AuthCallback = () => {
           setIsAuthenticated(true);
 
           // Show success message
-          toast.success(`Welcome back, ${name}! 🎉`, {
+          toast.success(`Welcome back, ${user.name}! 🎉`, {
             position: "top-right",
             autoClose: 3000,
           });
@@ -63,6 +65,12 @@ const AuthCallback = () => {
           animation: 'spin 1s linear infinite'
         }}>⏳</div>
         <p>Completing authentication...</p>
+        <style>{`
+          @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+          }
+        `}</style>
       </div>
     </div>
   );

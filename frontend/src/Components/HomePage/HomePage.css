@@ -50,15 +50,22 @@
   gap: 40px;
 }
 
-.nav-center a {
+.nav-center a,
+.nav-link-btn {
   color: #666;
   text-decoration: none;
   font-size: 14px;
   font-weight: 400;
   transition: color 0.3s ease;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: 'Inter', sans-serif;
+  padding: 0;
 }
 
-.nav-center a:hover {
+.nav-center a:hover,
+.nav-link-btn:hover {
   color: #1a1a1a;
 }
 
@@ -175,18 +182,48 @@
   justify-content: center;
   padding: 120px 40px 80px;
   background: #fafafa;
+  position: relative;
+  overflow: hidden;
+}
+
+.hero-video-background {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+}
+
+.hero-video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.hero-video-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.4);
+  z-index: 1;
 }
 
 .hero-minimal-content {
   text-align: center;
   max-width: 700px;
+  position: relative;
+  z-index: 2;
+  color: white;
 }
 
 .hero-subtitle {
   font-size: 12px;
   letter-spacing: 2px;
   text-transform: uppercase;
-  color: #999;
+  color: rgba(255, 255, 255, 0.9);
   margin-bottom: 30px;
   font-weight: 500;
 }
@@ -195,17 +232,19 @@
   font-size: 72px;
   font-weight: 300;
   line-height: 1.1;
-  color: #1a1a1a;
+  color: #ffffff;
   margin-bottom: 30px;
   letter-spacing: -2px;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
 }
 
 .hero-description {
   font-size: 16px;
   line-height: 1.8;
-  color: #666;
+  color: rgba(255, 255, 255, 0.95);
   margin-bottom: 50px;
   font-weight: 400;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
 }
 
 .hero-cta {
@@ -215,8 +254,8 @@
 }
 
 .btn-primary-minimal {
-  background: #1a1a1a;
-  color: #ffffff;
+  background: #ffffff;
+  color: #1a1a1a;
   border: none;
   padding: 16px 40px;
   font-size: 13px;
@@ -229,14 +268,15 @@
 }
 
 .btn-primary-minimal:hover {
-  background: #333;
+  background: #f0f0f0;
   transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(255, 255, 255, 0.3);
 }
 
 .btn-secondary-minimal {
-  background: transparent;
+  background: #ffffff;
   color: #1a1a1a;
-  border: 1px solid #e0e0e0;
+  border: none;
   padding: 16px 40px;
   font-size: 13px;
   letter-spacing: 1px;
@@ -250,8 +290,9 @@
 }
 
 .btn-secondary-minimal:hover {
-  border-color: #1a1a1a;
+  background: #f0f0f0;
   transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(255, 255, 255, 0.3);
 }
 
 /* AR Section - Minimal */
@@ -815,4 +856,14 @@ html {
 ::-moz-selection {
   background: #1a1a1a;
   color: #ffffff;
+}
+
+.dropdown-item.admin-item {
+  border-top: 1px solid #f0f0f0;
+  color: #ef6c00;
+}
+
+.dropdown-item.admin-item:hover {
+  background: #fff3e0;
+  color: #ef6c00;
 }

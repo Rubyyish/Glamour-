@@ -10,7 +10,11 @@ import HomePage from "./Components/HomePage/HomePage.jsx";
 import ProfilePage from "./Components/ProfilePage/ProfilePage.jsx";
 import Wardrobe from "./Components/Wardrobe/Wardrobe.jsx";
 import WardrobeDetail from "./Components/WardrobeDetail/WardrobeDetail.jsx";
+import AdminDashboard from "./Components/AdminDashboard/AdminDashboard.jsx";
 import AuthCallback from "./Components/AuthCallback/AuthCallback.jsx";
+import Collections from "./Components/Collections/Collections.jsx";
+import About from "./Components/About/About.jsx";
+import CategoryPage from "./Components/CategoryPage/CategoryPage.jsx";
 import { useAuth } from "./context/AuthContext.jsx";
 
 const App = () => {
@@ -54,6 +58,10 @@ const App = () => {
         <Route path="/profile" element={isAuthenticated ? <ProfilePage /> : <Navigate to="/login" />} />
         <Route path="/wardrobe" element={isAuthenticated ? <Wardrobe /> : <Navigate to="/login" />} />
         <Route path="/wardrobe/:id" element={isAuthenticated ? <WardrobeDetail /> : <Navigate to="/login" />} />
+        <Route path="/admin" element={isAuthenticated ? <AdminDashboard /> : <Navigate to="/login" />} />
+        <Route path="/collections" element={isAuthenticated ? <Collections /> : <Navigate to="/login" />} />
+        <Route path="/category/:category" element={isAuthenticated ? <CategoryPage /> : <Navigate to="/login" />} />
+        <Route path="/about" element={isAuthenticated ? <About /> : <Navigate to="/login" />} />
         <Route path="/" element={<Navigate to={isAuthenticated ? "/home" : "/login"} />} />
       </Routes>
       
