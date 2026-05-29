@@ -107,27 +107,46 @@ function makeSeamless(img) {
 }
 
 /**
- * Extract texture from image — uses the full garment, no tiling.
- * Resizes to 1024x1024 and removes background by filling transparent
- * areas with the average garment color.
+ * Extract a seamless fabric texture patch from a garment image.
+ * Crops the chest/body area, makes it seamless, tiles 2x2 → 1024x1024.
  */
 async function extractTexture(imageBuffer) {
   try {
     const img = await Jimp.read(imageBuffer);
+    const w = img.bitmap.width;
+    const h = img.bitmap.height;
 
-    // Get average color before flattening (for transparent bg images)
+    // Get average color to fill any transparent background
     const avgColor = getAverageColor(img);
-
-    // Fill transparent pixels with average color so background removal
-    // doesn't leave white patches
     flattenAlpha(img, avgColor);
 
-    // Resize the full garment to 1024x1024 (what Snap lens expects)
-    img.resize(1024, 1024);
+    // Crop the chest/torso area — centre horizontally, upper-mid vertically
+    // This avoids collar, sleeves, hem and focuses on the main fabric
+    const patchW = Math.floor(w * 0.40);   // 40% of width
+    const patchH = Math.floor(h * 0.30);   // 30% of height
+    const patchX = Math.floor(w * 0.30);   // start at 30% from left (centre)
+    const patchY = Math.floor(h * 0.25);   // start at 25% from top (chest area)
 
-    console.log(`Texture extracted: full garment resized to 1024x1024`);
+    console.log(`Texture patch: x=${patchX} y=${patchY} w=${patchW} h=${patchH}`);
 
-    return await img.getBufferAsync(Jimp.MIME_PNG);
+    const patch = img.clone().crop(patchX, patchY, patchW, patchH);
+
+    // Resize patch to 512x512 base
+    patch.resize(512, 512);
+
+    // Make the edges seamless so tiling doesn't show seams
+    makeSeamless(patch);
+
+    // Tile 2x2 into 1024x1024 — this is what Snap lens expects
+    const final = new Jimp(1024, 1024, 0xffffffff);
+    final.composite(patch, 0, 0);
+    final.composite(patch, 512, 0);
+    final.composite(patch, 0, 512);
+    final.composite(patch, 512, 512);
+
+    console.log('Texture extracted: 1024x1024 seamless tile');
+
+    return await final.getBufferAsync(Jimp.MIME_PNG);
   } catch (error) {
     console.error('Error in extractTexture:', error);
     throw new Error(`Failed to extract texture: ${error.message}`);
