@@ -10,14 +10,22 @@ const passport = require('./config/passport');
 const app = express();
 
 // Middleware
+const allowedOrigins = [
+  'http://localhost:5174',
+  'http://localhost:5173',
+  'https://glamour-livid.vercel.app',
+  process.env.FRONTEND_URL,
+].filter(Boolean).map(o => o.replace(/\/$/, ''));
+
 app.use(cors({
   origin: (origin, callback) => {
-    // Strip trailing slash for comparison
-    const allowed = (process.env.FRONTEND_URL || 'http://localhost:5174').replace(/\/$/, '');
-    const requestOrigin = (origin || '').replace(/\/$/, '');
-    if (!origin || requestOrigin === allowed) {
+    // Allow requests with no origin (mobile apps, curl, Render health checks)
+    if (!origin) return callback(null, true);
+    const clean = origin.replace(/\/$/, '');
+    if (allowedOrigins.includes(clean)) {
       callback(null, true);
     } else {
+      console.log('CORS blocked origin:', origin);
       callback(new Error(`CORS blocked: ${origin}`));
     }
   },
