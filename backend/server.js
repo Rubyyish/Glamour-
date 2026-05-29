@@ -11,7 +11,16 @@ const app = express();
 
 // Middleware
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:5174',
+  origin: (origin, callback) => {
+    // Strip trailing slash for comparison
+    const allowed = (process.env.FRONTEND_URL || 'http://localhost:5174').replace(/\/$/, '');
+    const requestOrigin = (origin || '').replace(/\/$/, '');
+    if (!origin || requestOrigin === allowed) {
+      callback(null, true);
+    } else {
+      callback(new Error(`CORS blocked: ${origin}`));
+    }
+  },
   credentials: true
 }));
 app.use(express.json({ limit: '50mb' }));
