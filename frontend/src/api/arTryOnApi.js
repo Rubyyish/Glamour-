@@ -16,7 +16,8 @@ export const processGarmentTexture = async (imageFile, garmentType = 'sweatshirt
     const response = await axiosInstance.post('/ar-tryon/process-garment', formData, {
       headers: {
         'Content-Type': 'multipart/form-data'
-      }
+      },
+      timeout: 60000  // 60s — Render free tier can take 30s+ to wake up
     });
     return response.data;
   } catch (error) {
