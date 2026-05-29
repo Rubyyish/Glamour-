@@ -15,7 +15,7 @@ const DynamicLensAR = ({ onClose }) => {
   const [isReady, setIsReady] = useState(false);
   const [error, setError] = useState(null);
   const [compatibilityInfo, setCompatibilityInfo] = useState(null);
-  
+
   const fileInputRef = useRef(null);
   const canvasRef = useRef(null);
   const sessionRef = useRef(null);
@@ -55,8 +55,20 @@ const DynamicLensAR = ({ onClose }) => {
       const response = await processGarmentTexture(selectedImage, clothingType);
       
       if (response.success) {
-        const fullTextureUrl = `${import.meta.env.VITE_API_URL}${response.texture}`;
-        setTextureUrl(fullTextureUrl);
+        // Fetch the processed texture and convert to base64 so the lens
+        // receives it directly — Snap's servers cannot reach localhost
+        const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5001';
+        const fullTextureUrl = `${apiUrl}${response.texture}`;
+
+        const texRes = await fetch(fullTextureUrl);
+        const blob = await texRes.blob();
+        const base64 = await new Promise((resolve) => {
+          const reader = new FileReader();
+          reader.onloadend = () => resolve(reader.result);
+          reader.readAsDataURL(blob);
+        });
+
+        setTextureUrl(base64);
         toast.success('Texture processed! Starting AR camera...');
         setStep('camera');
       } else {
@@ -153,15 +165,16 @@ const DynamicLensAR = ({ onClose }) => {
       const lens = await cameraKit.lensRepository.loadLens(lensId, lensGroupId);
       console.log('✅ Lens loaded');
 
-      // Apply lens with garment type parameter
-      // The lens will use Remote API to fetch texture from backend's get_image endpoint
+      // Apply lens — pass base64 texture directly so the lens doesn't
+      // need to make an outbound HTTP call to localhost
       await session.applyLens(lens, {
         launchParams: {
-          garment: clothingType
+          garment: clothingType,
+          texture_url: textureUrl  // base64 data URL — no remote fetch needed
         }
       });
       console.log('✅ Lens applied with garment type:', clothingType);
-      console.log('📡 Lens will fetch texture from backend via Remote API get_image endpoint');
+      console.log('📦 Texture passed as base64 directly to lens');
 
       setIsReady(true);
       toast.success('AR camera ready with your custom texture!');

@@ -107,37 +107,27 @@ function makeSeamless(img) {
 }
 
 /**
- * Extract texture from image and create a seamless tileable texture
+ * Extract texture from image — uses the full garment, no tiling.
+ * Resizes to 1024x1024 and removes background by filling transparent
+ * areas with the average garment color.
  */
 async function extractTexture(imageBuffer) {
   try {
     const img = await Jimp.read(imageBuffer);
-    const w = img.bitmap.width;
-    const h = img.bitmap.height;
 
-    // Crop center patch
-    const patchSize = Math.floor(Math.min(w, h) * 0.25);
-    const patchX = Math.floor(w / 2) - Math.floor(patchSize / 2);
-    const patchY = Math.floor(h * 0.35) - Math.floor(patchSize / 2);
+    // Get average color before flattening (for transparent bg images)
+    const avgColor = getAverageColor(img);
 
-    console.log(`Texture patch: ${patchX},${patchY} size ${patchSize}x${patchSize}`);
+    // Fill transparent pixels with average color so background removal
+    // doesn't leave white patches
+    flattenAlpha(img, avgColor);
 
-    const patch = img.clone().crop(patchX, patchY, patchSize, patchSize);
+    // Resize the full garment to 1024x1024 (what Snap lens expects)
+    img.resize(1024, 1024);
 
-    // Resize patch to 512x512
-    patch.resize(512, 512);
+    console.log(`Texture extracted: full garment resized to 1024x1024`);
 
-    // Make seamless
-    makeSeamless(patch);
-
-    // Tile 2x2 into 1024x1024
-    const final = new Jimp(1024, 1024, 0xffffffff);
-    final.composite(patch, 0, 0);
-    final.composite(patch, 512, 0);
-    final.composite(patch, 0, 512);
-    final.composite(patch, 512, 512);
-
-    return await final.getBufferAsync(Jimp.MIME_PNG);
+    return await img.getBufferAsync(Jimp.MIME_PNG);
   } catch (error) {
     console.error('Error in extractTexture:', error);
     throw new Error(`Failed to extract texture: ${error.message}`);
