@@ -105,7 +105,18 @@ const TextureUpload = ({ onTextureProcessed, onClose }) => {
       );
 
       if (result.success) {
-        toast.success('Texture saved to your profile!');
+        console.log('Texture saved:', result);
+        toast.success('✅ Texture saved to your profile! Now it\'s available in AR Try-On.');
+        
+        // Notify parent that texture was saved successfully
+        if (onTextureProcessed) {
+          onTextureProcessed({
+            success: true,
+            texture: processedTexture.texture,
+            filename: processedTexture.filename,
+            saved: true
+          });
+        }
         
         // Reset form
         setSelectedImage(null);
@@ -114,7 +125,7 @@ const TextureUpload = ({ onTextureProcessed, onClose }) => {
         setDescription('');
         
         if (onClose) {
-          onClose();
+          setTimeout(onClose, 500); // Small delay to show success toast
         }
       } else {
         toast.error(result.message || 'Failed to save texture');
@@ -236,7 +247,8 @@ const TextureUpload = ({ onTextureProcessed, onClose }) => {
           {/* Step 4: Preview & Save */}
           {processedTexture && (
             <div className="texture-step">
-              <h3>Step 4: Preview & Save</h3>
+              <h3>Step 4: Save Texture to Profile</h3>
+              <p className="texture-step-info">✨ Preview of your processed texture:</p>
               
               <div className="texture-result-preview">
                 <img 
@@ -266,9 +278,13 @@ const TextureUpload = ({ onTextureProcessed, onClose }) => {
                   disabled={isSaving}
                   className="texture-save-btn"
                 >
-                  {isSaving ? 'Saving...' : '💾 Save to Profile'}
+                  {isSaving ? '💾 Saving...' : '💾 Save to Profile (Required)'}
                 </button>
               </div>
+
+              <p className="texture-save-hint">
+                ⚠️ You must click "Save to Profile" to use this texture in AR Try-On!
+              </p>
 
               <button
                 onClick={() => {
@@ -279,7 +295,7 @@ const TextureUpload = ({ onTextureProcessed, onClose }) => {
                 }}
                 className="texture-reset-btn"
               >
-                Process Another Image
+                ↩️ Process Another Image
               </button>
             </div>
           )}

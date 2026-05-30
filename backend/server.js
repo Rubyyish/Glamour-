@@ -132,6 +132,31 @@ app.options('/get_image', (req, res) => {
   res.sendStatus(200);
 });
 
+// Debug endpoint to test texture serving
+app.get('/test_texture', (req, res) => {
+  const fs = require('fs');
+  const texturesDir = path.join(__dirname, 'public/textures');
+  
+  if (!fs.existsSync(texturesDir)) {
+    return res.json({ error: 'Textures directory does not exist' });
+  }
+  
+  const files = fs.readdirSync(texturesDir)
+    .filter(file => file.startsWith('texture-') && file.endsWith('.png'));
+  
+  res.json({
+    texturesDir,
+    filesFound: files.length,
+    files: files.map(f => ({
+      name: f,
+      size: fs.statSync(path.join(texturesDir, f)).size,
+      modified: fs.statSync(path.join(texturesDir, f)).mtime
+    })),
+    latestTexture: files.length > 0 ? files[0] : null,
+    getImageUrl: '/get_image'
+  });
+});
+
 // Session configuration
 app.use(session({
   secret: process.env.SESSION_SECRET,
@@ -147,10 +172,36 @@ app.use(session({
 app.use(passport.initialize());
 app.use(passport.session());
 
-// MongoDB connection
-mongoose.connect(process.env.MONGODB_URI)
-  .then(() => console.log('Connected to MongoDB'))
-  .catch((error) => console.error('MongoDB connection error:', error));
+// MongoDB connection with better error handling
+const connectDB = async () => {
+  try {
+    await mongoose.connect(process.env.MONGODB_URI, {
+      serverSelectionTimeoutMS: 5000, // Timeout after 5s instead of 30s
+      socketTimeoutMS: 45000, // Close sockets after 45s of inactivity
+    });
+    console.log('✅ Connected to MongoDB');
+  } catch (error) {
+    console.error('❌ MongoDB connection error:', error.message);
+    console.error('💡 Make sure your MONGODB_URI is correct in .env file');
+    console.error('💡 If using MongoDB Atlas, check:');
+    console.error('   1. Network access allows your IP');
+    console.error('   2. Database user credentials are correct');
+    console.error('   3. Connection string includes password');
+    process.exit(1); // Exit if can't connect to database
+  }
+};
+
+// Handle connection events
+mongoose.connection.on('disconnected', () => {
+  console.log('⚠️  MongoDB disconnected');
+});
+
+mongoose.connection.on('error', (err) => {
+  console.error('❌ MongoDB error:', err);
+});
+
+// Connect to database
+connectDB();
 
 // Routes
 app.get('/', (req, res) => {

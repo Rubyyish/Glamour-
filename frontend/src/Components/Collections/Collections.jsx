@@ -176,6 +176,90 @@ const Collections = () => {
       condition: 'Good',
       description: 'Tailored waistcoat perfect for layering. Great for both casual and formal occasions.',
       tags: ['Formal', 'Layering', 'Classic']
+    },
+    {
+      id: 4,
+      name: 'VINTAGE LEATHER JACKET',
+      image: 'https://images.unsplash.com/photo-1551028719-00167b16eac5?w=600&q=80',
+      price: '$65',
+      category: 'Outerwear',
+      brand: 'Vintage',
+      size: 'M',
+      colors: ['Black', 'Leather'],
+      season: 'Fall',
+      condition: 'Excellent',
+      description: 'Classic black leather jacket with timeless appeal. Perfect for adding edge to any outfit.',
+      tags: ['Vintage', 'Leather', 'Edgy']
+    },
+    {
+      id: 5,
+      name: 'FLORAL MIDI SKIRT',
+      image: 'https://images.unsplash.com/photo-1583496661160-fb5886a0aaaa?w=600&q=80',
+      price: '$24',
+      category: 'Bottoms',
+      brand: 'Zara',
+      size: 'M',
+      colors: ['Floral', 'Multi'],
+      season: 'Spring',
+      condition: 'Very Good',
+      description: 'Beautiful floral midi skirt with flowing silhouette. Perfect for spring and summer occasions.',
+      tags: ['Floral', 'Feminine', 'Spring']
+    },
+    {
+      id: 6,
+      name: 'CASHMERE SWEATER',
+      image: 'https://images.unsplash.com/photo-1576566588028-4147f3842f27?w=600&q=80',
+      price: '$38',
+      category: 'Tops',
+      brand: 'J.Crew',
+      size: 'S',
+      colors: ['Cream', 'Beige'],
+      season: 'Winter',
+      condition: 'Excellent',
+      description: 'Luxurious cashmere sweater in pristine condition. Soft, warm, and incredibly comfortable.',
+      tags: ['Cashmere', 'Luxury', 'Cozy']
+    },
+    {
+      id: 7,
+      name: 'HIGH-WAIST TROUSERS',
+      image: 'https://images.unsplash.com/photo-1594633312681-425c7b97ccd1?w=600&q=80',
+      price: '$29',
+      category: 'Bottoms',
+      brand: 'Mango',
+      size: 'M',
+      colors: ['Black', 'Navy'],
+      season: 'All Season',
+      condition: 'Very Good',
+      description: 'Tailored high-waist trousers with elegant fit. Versatile piece for work or evening wear.',
+      tags: ['Professional', 'Tailored', 'Classic']
+    },
+    {
+      id: 8,
+      name: 'SILK BLOUSE',
+      image: 'https://images.unsplash.com/photo-1618932260643-eee4a2f652a6?w=600&q=80',
+      price: '$35',
+      category: 'Tops',
+      brand: 'Massimo Dutti',
+      size: 'S',
+      colors: ['White', 'Ivory'],
+      season: 'All Season',
+      condition: 'Excellent',
+      description: 'Elegant silk blouse with delicate draping. Perfect for both professional and casual settings.',
+      tags: ['Silk', 'Elegant', 'Versatile']
+    },
+    {
+      id: 9,
+      name: 'WOOL PEACOAT',
+      image: 'https://images.unsplash.com/photo-1539533018447-63fcce2678e3?w=600&q=80',
+      price: '$52',
+      category: 'Outerwear',
+      brand: 'Burberry',
+      size: 'L',
+      colors: ['Navy', 'Blue'],
+      season: 'Winter',
+      condition: 'Very Good',
+      description: 'Classic wool peacoat with double-breasted design. Timeless piece that never goes out of style.',
+      tags: ['Classic', 'Wool', 'Timeless']
     }
   ];
 
@@ -185,14 +269,16 @@ const Collections = () => {
       title: 'Trousers',
       description: 'Discover our curated selection of pre-loved trousers, each piece carefully chosen for quality and style. From tailored fits to relaxed silhouettes.',
       image: 'images/trousers_display.jpg',
-      buttonText: 'BROWSE TROUSERS'
+      buttonText: 'BROWSE TROUSERS',
+      link: '/category/trousers'
     },
     {
       id: 2,
       title: 'Shirts',
       description: 'Explore our collection of vintage and contemporary shirts, each with its own story. Perfect for any occasion, from casual to formal.',
       image: 'images/shirts_display.jpg',
-      buttonText: 'BROWSE SHIRTS'
+      buttonText: 'BROWSE SHIRTS',
+      link: '/category/shirts'
     }
   ];
 
@@ -319,7 +405,12 @@ const Collections = () => {
               <div className="category-card-content">
                 <h2>{category.title}</h2>
                 <p>{category.description}</p>
-                <button className="category-card-btn">{category.buttonText}</button>
+                <button 
+                  className="category-card-btn"
+                  onClick={() => navigate(category.link)}
+                >
+                  {category.buttonText}
+                </button>
               </div>
             </div>
           ))}

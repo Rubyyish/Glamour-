@@ -32,11 +32,12 @@ const ARTryOn = ({ item, onClose }) => {
     try {
       setIsLoadingTextures(true);
       const response = await getUserTextures();
-      if (response.success) {
-        setUserTextures(response.textures || []);
-        // If there's a default texture, select it
-        if (response.textures && response.textures.length > 0) {
+      if (response.success && response.textures) {
+        setUserTextures(response.textures);
+        // Auto-select the most recent texture (first one after sort)
+        if (response.textures.length > 0) {
           setSelectedTexture(response.textures[0]);
+          console.log('Auto-selected texture:', response.textures[0].garmentType);
         }
       }
     } catch (error) {
@@ -201,10 +202,14 @@ const ARTryOn = ({ item, onClose }) => {
   };
 
   const handleTextureProcessed = (result) => {
-    if (result.success && result.texture) {
-      // Reload textures after successful processing
+    if (result && result.success) {
+      console.log('Texture processed and saved:', result);
+      // Force reload textures after saving
       loadUserTextures();
-      toast.info('Texture processed! Reload to use it in try-on.');
+      
+      if (result.saved) {
+        toast.success('🎉 New texture is ready! It\'s now in your list.');
+      }
     }
   };
 

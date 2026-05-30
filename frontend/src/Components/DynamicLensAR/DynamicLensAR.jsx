@@ -1,9 +1,18 @@
 import { useState, useRef, useEffect } from 'react';
-import { bootstrapCameraKit, createMediaStreamSource, Transform2D } from '@snap/camera-kit';
+import {
+  bootstrapCameraKit,
+  createExtension,
+  createMediaStreamSource,
+  Injectable,
+  remoteApiServicesFactory,
+  Transform2D
+} from '@snap/camera-kit';
 import { toast } from 'react-toastify';
 import { processGarmentTexture } from '../../api/arTryOnApi';
 import { checkBrowserCompatibility, getSystemInfo } from '../../utils/browserCompatibility';
 import './DynamicLensAR.css';
+
+const BACKEND_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001';
 
 const DynamicLensAR = ({ onClose }) => {
   const [step, setStep] = useState('upload'); // 'upload', 'camera'
@@ -20,6 +29,60 @@ const DynamicLensAR = ({ onClose }) => {
   const canvasRef = useRef(null);
   const sessionRef = useRef(null);
   const sourceRef = useRef(null);
+  const cameraKitRef = useRef(null);
+  const lensRef = useRef(null);
+  const processedTextureUrlRef = useRef(null);
+
+  // Stores the raw texture bytes for the Remote API to serve directly to the lens
+  const textureRef = useRef(null);
+
+  // Remote API service — the lens calls "get_image" and we reply with the texture buffer
+  const createRemoteApiService = () => ({
+    apiSpecId: import.meta.env.VITE_REMOTE_API_SPEC_ID,
+    getRequestHandler: (request) => {
+      if (request.endpointId === 'get_image') {
+        return (reply) => {
+          const texture = textureRef.current;
+          if (!texture) {
+            reply({
+              status: 'notFound',
+              metadata: {},
+              body: new ArrayBuffer(0)
+            });
+            return;
+          }
+          reply({
+            status: 'success',
+            metadata: { 'content-type': texture.mime },
+            body: texture.buffer
+          });
+        };
+      }
+    }
+  });
+
+  // Re-apply the lens with updated garment / texture params without re-bootstrapping
+  const applyLensWithData = async (garment, textureUrlValue) => {
+    if (!sessionRef.current || !lensRef.current) return;
+    try {
+      await sessionRef.current.applyLens(lensRef.current, {
+        launchParams: {
+          garment,
+          ...(textureUrlValue && { textureUrl: textureUrlValue })
+        }
+      });
+    } catch (err) {
+      console.error('Failed to re-apply lens:', err);
+    }
+  };
+
+  // Handle garment type change — if camera is already active, re-apply lens immediately
+  const handleGarmentChange = async (value) => {
+    setClothingType(value);
+    if (sessionRef.current && lensRef.current) {
+      await applyLensWithData(value, processedTextureUrlRef.current);
+    }
+  };
 
   const clothingTypes = [
     { value: 'tshirt', label: 'T-Shirt' },
@@ -55,11 +118,31 @@ const DynamicLensAR = ({ onClose }) => {
       const response = await processGarmentTexture(selectedImage, clothingType);
       
       if (response.success) {
-        // Build the full public URL — backend is deployed so Snap can reach it
-        const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5001';
-        const fullTextureUrl = `${apiUrl}${response.texture}`;
+        // Build the full public URL for the texture
+        const fullTextureUrl = response.texture.startsWith('http')
+          ? response.texture
+          : `${BACKEND_URL}${response.texture}`;
 
         setTextureUrl(fullTextureUrl);
+        processedTextureUrlRef.current = fullTextureUrl;
+
+        // Fetch the actual texture bytes so the Remote API can serve them to the lens
+        try {
+          const imageResponse = await fetch(fullTextureUrl, {
+            headers: { 'ngrok-skip-browser-warning': 'true' }
+          });
+          const buffer = await imageResponse.arrayBuffer();
+
+          textureRef.current = {
+            buffer,
+            mime: 'image/png',
+            name: selectedImage.name.replace(/\.[^.]+$/, '.png')
+          };
+        } catch (fetchErr) {
+          console.warn('Could not pre-fetch texture bytes:', fetchErr);
+          // Camera will still start; Remote API will return notFound until bytes arrive
+        }
+
         toast.success('Texture processed! Starting AR camera...');
         setStep('camera');
       } else {
@@ -115,9 +198,23 @@ const DynamicLensAR = ({ onClose }) => {
         throw new Error('Missing Snap Camera Kit credentials');
       }
 
-      // Bootstrap Camera Kit
-      const cameraKit = await bootstrapCameraKit({ apiToken });
-      console.log('✅ Camera Kit bootstrapped');
+      // Bootstrap Camera Kit with Remote API extension (only once)
+      if (!cameraKitRef.current) {
+        const remoteApiService = createRemoteApiService();
+        const remoteApiProvider = Injectable(
+          remoteApiServicesFactory.token,
+          [],
+          () => [remoteApiService]
+        );
+        const extension = createExtension().provides(remoteApiProvider);
+        cameraKitRef.current = await bootstrapCameraKit(
+          { apiToken },
+          (container) => container.provides(extension)
+        );
+      }
+      console.log('✅ Camera Kit bootstrapped with Remote API extension');
+
+      const cameraKit = cameraKitRef.current;
 
       // Create session
       const session = await cameraKit.createSession({
@@ -140,7 +237,7 @@ const DynamicLensAR = ({ onClose }) => {
       // Create source
       const source = createMediaStreamSource(mediaStream, {
         transform: Transform2D.MirrorX,
-        cameraType: 'front'
+        cameraType: 'user'
       });
       
       await session.setSource(source);
@@ -148,20 +245,22 @@ const DynamicLensAR = ({ onClose }) => {
       console.log('✅ Source set');
 
       // Play
-      await source.setRenderSize(canvasRef.current.width, canvasRef.current.height);
       await session.play();
       console.log('✅ Session playing');
 
       // Load lens
       const lens = await cameraKit.lensRepository.loadLens(lensId, lensGroupId);
+      lensRef.current = lens;
       console.log('✅ Lens loaded');
 
-      // Apply lens — pass the public backend URL so the lens can fetch it
-      console.log('🖼️ Texture URL passed to lens:', textureUrl);
+      // Apply lens with garment type and texture URL via launchParams
+      console.log('🖼️ Texture URL passed to lens:', processedTextureUrlRef.current);
       await session.applyLens(lens, {
         launchParams: {
           garment: clothingType,
-          texture_url: textureUrl  // public URL — Snap servers can reach deployed backend
+          ...(processedTextureUrlRef.current && {
+            textureUrl: processedTextureUrlRef.current
+          })
         }
       });
       console.log('✅ Lens applied with garment type:', clothingType);
@@ -255,7 +354,7 @@ const DynamicLensAR = ({ onClose }) => {
                   <button
                     key={type.value}
                     className={`type-btn ${clothingType === type.value ? 'active' : ''}`}
-                    onClick={() => setClothingType(type.value)}
+                    onClick={() => handleGarmentChange(type.value)}
                   >
                     {type.label}
                   </button>
