@@ -27,13 +27,24 @@ Thumbs.db
 package-lock.json
 yarn.lock
 
-# Media / uploads
-*.jpg
-*.jpeg
-*.png
-*.gif
-*.webm
-*.mp4
+# Media / uploads (exclude user uploads but keep static assets)
+backend/public/textures/*.jpg
+backend/public/textures/*.jpeg
+backend/public/textures/*.png
+backend/uploads/**/*.jpg
+backend/uploads/**/*.jpeg
+backend/uploads/**/*.png
+backend/uploads/**/*.gif
+backend/uploads/**/*.webm
+backend/uploads/**/*.mp4
+
+# Allow frontend public assets
+!frontend/public/**/*.jpg
+!frontend/public/**/*.jpeg
+!frontend/public/**/*.png
+!frontend/public/**/*.gif
+!frontend/public/**/*.webm
+!frontend/public/**/*.mp4
 
 # Misc
 storage.rules
