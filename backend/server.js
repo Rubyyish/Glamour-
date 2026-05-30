@@ -57,6 +57,13 @@ app.get('/get_image', (req, res) => {
     const fs = require('fs');
     const texturesDir = path.join(__dirname, 'public/textures');
     
+    // Ensure directory exists
+    if (!fs.existsSync(texturesDir)) {
+      console.log('❌ Textures directory does not exist:', texturesDir);
+      fs.mkdirSync(texturesDir, { recursive: true });
+      console.log('✅ Created textures directory');
+    }
+    
     // Get the most recent texture file
     const files = fs.readdirSync(texturesDir)
       .filter(file => file.startsWith('texture-') && file.endsWith('.png'))
@@ -68,7 +75,7 @@ app.get('/get_image', (req, res) => {
     
     if (files.length === 0) {
       console.log('❌ No texture files found in', texturesDir);
-      return res.status(404).json({ error: 'No texture available' });
+      return res.status(404).json({ error: 'No texture available. Please upload a garment image first.' });
     }
     
     const latestTexture = files[0].name;
@@ -85,7 +92,7 @@ app.get('/get_image', (req, res) => {
     res.sendFile(texturePath);
   } catch (error) {
     console.error('Error serving texture to Snap Lens:', error);
-    res.status(500).json({ error: 'Failed to serve texture' });
+    res.status(500).json({ error: 'Failed to serve texture', details: error.message });
   }
 });
 
