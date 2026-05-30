@@ -55,20 +55,11 @@ const DynamicLensAR = ({ onClose }) => {
       const response = await processGarmentTexture(selectedImage, clothingType);
       
       if (response.success) {
-        // Fetch the processed texture and convert to base64 so the lens
-        // receives it directly — Snap's servers cannot reach localhost
+        // Build the full public URL — backend is deployed so Snap can reach it
         const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5001';
         const fullTextureUrl = `${apiUrl}${response.texture}`;
 
-        const texRes = await fetch(fullTextureUrl);
-        const blob = await texRes.blob();
-        const base64 = await new Promise((resolve) => {
-          const reader = new FileReader();
-          reader.onloadend = () => resolve(reader.result);
-          reader.readAsDataURL(blob);
-        });
-
-        setTextureUrl(base64);
+        setTextureUrl(fullTextureUrl);
         toast.success('Texture processed! Starting AR camera...');
         setStep('camera');
       } else {
@@ -165,16 +156,15 @@ const DynamicLensAR = ({ onClose }) => {
       const lens = await cameraKit.lensRepository.loadLens(lensId, lensGroupId);
       console.log('✅ Lens loaded');
 
-      // Apply lens — pass base64 texture directly so the lens doesn't
-      // need to make an outbound HTTP call to localhost
+      // Apply lens — pass the public backend URL so the lens can fetch it
+      console.log('🖼️ Texture URL passed to lens:', textureUrl);
       await session.applyLens(lens, {
         launchParams: {
           garment: clothingType,
-          texture_url: textureUrl  // base64 data URL — no remote fetch needed
+          texture_url: textureUrl  // public URL — Snap servers can reach deployed backend
         }
       });
       console.log('✅ Lens applied with garment type:', clothingType);
-      console.log('📦 Texture passed as base64 directly to lens');
 
       setIsReady(true);
       toast.success('AR camera ready with your custom texture!');
@@ -360,11 +350,11 @@ const DynamicLensAR = ({ onClose }) => {
                 </button>
                 {textureUrl && (
                   <a 
-                    href={textureUrl} 
+                    href={textureUrl}
                     target="_blank" 
                     rel="noopener noreferrer"
                     className="view-texture-btn"
-                    title="View processed texture"
+                    title="View processed texture (opens backend URL)"
                   >
                     View Texture
                   </a>
