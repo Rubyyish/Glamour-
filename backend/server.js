@@ -45,6 +45,10 @@ app.use('/api/ar-tryon/textures', (req, res, next) => {
 // Snap Lens Remote API endpoint - get_image
 // This endpoint is called by the Snap Lens to fetch the texture
 app.get('/get_image', (req, res) => {
+  console.log('🔵 Snap Lens requesting texture via Remote API');
+  console.log('Query params:', req.query);
+  console.log('Origin:', req.headers.origin);
+  
   try {
     const { id } = req.query;
     
@@ -63,11 +67,14 @@ app.get('/get_image', (req, res) => {
       .sort((a, b) => b.time - a.time);
     
     if (files.length === 0) {
+      console.log('❌ No texture files found in', texturesDir);
       return res.status(404).json({ error: 'No texture available' });
     }
     
     const latestTexture = files[0].name;
     const texturePath = path.join(texturesDir, latestTexture);
+    
+    console.log('✅ Serving texture:', latestTexture);
     
     // Set CORS headers for Snap Lens
     res.header('Access-Control-Allow-Origin', '*');
