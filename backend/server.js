@@ -44,10 +44,12 @@ app.use('/api/ar-tryon/textures', (req, res, next) => {
 
 // Snap Lens Remote API endpoint - get_image
 // This endpoint is called by the Snap Lens to fetch the texture
+// Snap Remote API expects specific response format
 app.get('/get_image', (req, res) => {
   console.log('🔵 Snap Lens requesting texture via Remote API');
   console.log('Query params:', req.query);
   console.log('Origin:', req.headers.origin);
+  console.log('User-Agent:', req.headers['user-agent']);
   
   try {
     const { id } = req.query;
@@ -75,25 +77,59 @@ app.get('/get_image', (req, res) => {
     
     if (files.length === 0) {
       console.log('❌ No texture files found in', texturesDir);
-      return res.status(404).json({ error: 'No texture available. Please upload a garment image first.' });
+      // Return proper error response for Snap Remote API
+      res.header('Access-Control-Allow-Origin', '*');
+      res.header('Access-Control-Allow-Methods', 'GET');
+      return res.status(404).json({ 
+        error: 'No texture available',
+        message: 'Please upload a garment image first.' 
+      });
     }
     
     const latestTexture = files[0].name;
     const texturePath = path.join(texturesDir, latestTexture);
     
     console.log('✅ Serving texture:', latestTexture);
+    console.log('📁 File path:', texturePath);
+    console.log('📊 File size:', fs.statSync(texturePath).size, 'bytes');
     
-    // Set CORS headers for Snap Lens
+    // Set CORS headers for Snap Lens - must be permissive
     res.header('Access-Control-Allow-Origin', '*');
-    res.header('Access-Control-Allow-Methods', 'GET');
-    res.header('Content-Type', 'image/png');
+    res.header('Access-Control-Allow-Methods', 'GET, OPTIONS');
+    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    res.header('Access-Control-Expose-Headers', 'Content-Length, Content-Type');
     
-    // Send the texture file
-    res.sendFile(texturePath);
+    // Set content type explicitly
+    res.header('Content-Type', 'image/png');
+    res.header('Cache-Control', 'no-cache, no-store, must-revalidate');
+    
+    // Send the texture file as binary
+    res.sendFile(texturePath, (err) => {
+      if (err) {
+        console.error('❌ Error sending file:', err);
+        if (!res.headersSent) {
+          res.status(500).json({ error: 'Failed to send texture' });
+        }
+      } else {
+        console.log('✅ Texture sent successfully');
+      }
+    });
   } catch (error) {
-    console.error('Error serving texture to Snap Lens:', error);
-    res.status(500).json({ error: 'Failed to serve texture', details: error.message });
+    console.error('❌ Error serving texture to Snap Lens:', error);
+    res.header('Access-Control-Allow-Origin', '*');
+    res.status(500).json({ 
+      error: 'Failed to serve texture', 
+      details: error.message 
+    });
   }
+});
+
+// Handle OPTIONS preflight for CORS
+app.options('/get_image', (req, res) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  res.sendStatus(200);
 });
 
 // Session configuration
