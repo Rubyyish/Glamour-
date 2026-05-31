@@ -95,6 +95,18 @@ const userSchema = new mongoose.Schema({
       type: Date,
       default: Date.now
     }
+  }],
+  favorites: [{
+    itemId: String,
+    itemName: String,
+    itemImage: String,
+    itemPrice: String,
+    itemBrand: String,
+    itemCategory: String,
+    addedAt: {
+      type: Date,
+      default: Date.now
+    }
   }]
 }, {
   timestamps: true
