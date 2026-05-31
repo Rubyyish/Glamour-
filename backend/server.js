@@ -209,14 +209,13 @@ app.get('/', (req, res) => {
 });
 
 // Import routes
-const wardrobeRoutes = require('./routes/wardrobeRoutes');
 const paymentRoutes = require('./routes/payment');
 app.use('/api/auth', require('./routes/auth'));
-app.use('/api/wardrobe', wardrobeRoutes);
 app.use('/api/wardrobe', require('./routes/wardrobe'));
 app.use('/api/admin', require('./routes/admin'));
 app.use('/api/ar-tryon', require('./routes/arTryOn'));
 app.use('/api/payment', paymentRoutes);
+app.use('/api/favorites', require('./routes/favorites'));
 
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, '0.0.0.0', () => {

@@ -27,7 +27,19 @@ const Wardrobe = () => {
       }
     } catch (error) {
       console.error('Error fetching wardrobes:', error);
-      toast.error('Failed to load wardrobes');
+      
+      // Check if it's an auth error
+      if (error.response?.status === 401) {
+        toast.error('Session expired. Please log in again.');
+        // Clear auth and redirect with session expired flag
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        setTimeout(() => {
+          window.location.href = '/login?sessionExpired=true';
+        }, 1500);
+      } else {
+        toast.error('Failed to load wardrobes');
+      }
     } finally {
       setLoading(false);
     }
@@ -48,7 +60,12 @@ const Wardrobe = () => {
     }
 
     try {
+      console.log('🎨 Creating wardrobe:', newWardrobeName);
+      console.log('🔑 Token in localStorage:', localStorage.getItem('token') ? 'Present' : 'Missing');
+      
       const response = await createWardrobe({ name: newWardrobeName });
+      
+      console.log('✅ Wardrobe created successfully:', response);
       
       if (response.success) {
         setWardrobes([response.wardrobe, ...wardrobes]);
@@ -57,8 +74,29 @@ const Wardrobe = () => {
         toast.success(`Wardrobe "${newWardrobeName}" created!`);
       }
     } catch (error) {
-      console.error('Error creating wardrobe:', error);
-      toast.error('Failed to create wardrobe');
+      console.error('❌ Error creating wardrobe:', error);
+      console.error('Error response:', error.response);
+      
+      // Check if it's an auth error
+      if (error.response?.status === 401) {
+        const token = localStorage.getItem('token');
+        console.error('🔒 401 Error - Token status:', token ? 'Exists' : 'Missing');
+        
+        if (!token) {
+          toast.error('No authentication token found. Please log in again.');
+        } else {
+          toast.error('Session expired or invalid. Please log in again.');
+        }
+        
+        // Clear auth and redirect with session expired flag
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        setTimeout(() => {
+          window.location.href = '/login?sessionExpired=true';
+        }, 2000);
+      } else {
+        toast.error(error.response?.data?.message || 'Failed to create wardrobe');
+      }
     }
   };
 

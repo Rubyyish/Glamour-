@@ -15,10 +15,15 @@ axiosInstance.interceptors.request.use(
     const token = localStorage.getItem('token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
+      console.log('🔑 Token attached to request:', token.substring(0, 20) + '...');
+    } else {
+      console.warn('⚠️ No token found in localStorage');
     }
+    console.log('📤 Request:', config.method.toUpperCase(), config.url);
     return config;
   },
   (error) => {
+    console.error('❌ Request interceptor error:', error);
     return Promise.reject(error);
   }
 );
@@ -26,15 +31,38 @@ axiosInstance.interceptors.request.use(
 // Response interceptor to handle errors
 axiosInstance.interceptors.response.use(
   (response) => {
+    console.log('✅ Response:', response.config.method.toUpperCase(), response.config.url, response.status);
     return response;
   },
   (error) => {
-    if (error.response?.status === 401) {
-      // Token expired or invalid
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      window.location.href = '/login';
+    // Log detailed error information
+    if (error.response) {
+      console.error('❌ Response error:', {
+        status: error.response.status,
+        url: error.config?.url,
+        message: error.response.data?.message,
+        data: error.response.data
+      });
+      
+      // Handle 401 errors
+      if (error.response.status === 401) {
+        console.warn('🔒 401 Unauthorized - Authentication required');
+        
+        // Check if token exists
+        const token = localStorage.getItem('token');
+        if (!token) {
+          console.error('❌ No token in localStorage - user needs to login');
+        } else {
+          console.error('❌ Token exists but was rejected by server');
+          console.log('Token preview:', token.substring(0, 30) + '...');
+        }
+      }
+    } else if (error.request) {
+      console.error('❌ No response received:', error.request);
+    } else {
+      console.error('❌ Request setup error:', error.message);
     }
+    
     return Promise.reject(error);
   }
 );
