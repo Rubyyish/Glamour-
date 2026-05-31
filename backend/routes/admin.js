@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const User = require('../models/User');
 const Wardrobe = require('../models/Wardrobe');
+const Transaction = require('../models/Transaction');
 const adminAuth = require('../middleware/adminAuth');
 
 // Get all users with statistics
@@ -192,6 +193,38 @@ router.get('/stats', adminAuth, async (req, res) => {
     const localUsers = await User.countDocuments({ authProvider: 'local' });
     const googleUsers = await User.countDocuments({ authProvider: 'google' });
 
+    // Transaction statistics
+    const totalTransactions = await Transaction.countDocuments();
+    const completedTransactions = await Transaction.countDocuments({ status: 'completed' });
+    const pendingTransactions = await Transaction.countDocuments({ status: 'pending' });
+    const failedTransactions = await Transaction.countDocuments({ status: 'failed' });
+    const flaggedTransactions = await Transaction.countDocuments({ flaggedForReview: true });
+
+    // Calculate total revenue
+    const revenueData = await Transaction.aggregate([
+      { $match: { status: 'completed' } },
+      { $group: { _id: null, total: { $sum: '$amount' } } }
+    ]);
+    const totalRevenue = revenueData.length > 0 ? revenueData[0].total : 0;
+
+    // Recent transactions (last 7 days)
+    const recentTransactions = await Transaction.countDocuments({ 
+      createdAt: { $gte: sevenDaysAgo },
+      status: 'completed'
+    });
+
+    // Revenue last 7 days
+    const recentRevenueData = await Transaction.aggregate([
+      { 
+        $match: { 
+          status: 'completed',
+          createdAt: { $gte: sevenDaysAgo }
+        } 
+      },
+      { $group: { _id: null, total: { $sum: '$amount' } } }
+    ]);
+    const recentRevenue = recentRevenueData.length > 0 ? recentRevenueData[0].total : 0;
+
     res.json({
       success: true,
       stats: {
@@ -206,6 +239,18 @@ router.get('/stats', adminAuth, async (req, res) => {
         authProviders: {
           local: localUsers,
           google: googleUsers
+        },
+        transactions: {
+          total: totalTransactions,
+          completed: completedTransactions,
+          pending: pendingTransactions,
+          failed: failedTransactions,
+          flagged: flaggedTransactions,
+          recent: recentTransactions
+        },
+        revenue: {
+          total: totalRevenue,
+          recent: recentRevenue
         }
       }
     });
@@ -214,6 +259,230 @@ router.get('/stats', adminAuth, async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to fetch statistics'
+    });
+  }
+});
+
+// Get all transactions with filters
+router.get('/transactions', adminAuth, async (req, res) => {
+  try {
+    const { status, flagged, userId, startDate, endDate, page = 1, limit = 50 } = req.query;
+    
+    const query = {};
+    
+    if (status) query.status = status;
+    if (flagged === 'true') query.flaggedForReview = true;
+    if (userId) query.userId = userId;
+    
+    if (startDate || endDate) {
+      query.createdAt = {};
+      if (startDate) query.createdAt.$gte = new Date(startDate);
+      if (endDate) query.createdAt.$lte = new Date(endDate);
+    }
+
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+    
+    const transactions = await Transaction.find(query)
+      .populate('userId', 'name email profilePicture')
+      .populate('reviewedBy', 'name email')
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(parseInt(limit));
+
+    const total = await Transaction.countDocuments(query);
+
+    res.json({
+      success: true,
+      transactions,
+      pagination: {
+        total,
+        page: parseInt(page),
+        pages: Math.ceil(total / parseInt(limit)),
+        limit: parseInt(limit)
+      }
+    });
+  } catch (error) {
+    console.error('Get transactions error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch transactions'
+    });
+  }
+});
+
+// Get single transaction details
+router.get('/transactions/:id', adminAuth, async (req, res) => {
+  try {
+    const transaction = await Transaction.findById(req.params.id)
+      .populate('userId', 'name email profilePicture authProvider createdAt')
+      .populate('reviewedBy', 'name email');
+
+    if (!transaction) {
+      return res.status(404).json({
+        success: false,
+        message: 'Transaction not found'
+      });
+    }
+
+    res.json({
+      success: true,
+      transaction
+    });
+  } catch (error) {
+    console.error('Get transaction error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch transaction'
+    });
+  }
+});
+
+// Flag/unflag transaction for review
+router.patch('/transactions/:id/flag', adminAuth, async (req, res) => {
+  try {
+    const { flagged, adminNotes } = req.body;
+    
+    const transaction = await Transaction.findById(req.params.id);
+    
+    if (!transaction) {
+      return res.status(404).json({
+        success: false,
+        message: 'Transaction not found'
+      });
+    }
+
+    transaction.flaggedForReview = flagged;
+    if (adminNotes) transaction.adminNotes = adminNotes;
+    
+    if (flagged) {
+      transaction.reviewedBy = req.user._id;
+      transaction.reviewedAt = new Date();
+    }
+
+    await transaction.save();
+
+    res.json({
+      success: true,
+      message: flagged ? 'Transaction flagged for review' : 'Transaction unflagged',
+      transaction
+    });
+  } catch (error) {
+    console.error('Flag transaction error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to update transaction'
+    });
+  }
+});
+
+// Add admin notes to transaction
+router.patch('/transactions/:id/notes', adminAuth, async (req, res) => {
+  try {
+    const { adminNotes } = req.body;
+    
+    const transaction = await Transaction.findByIdAndUpdate(
+      req.params.id,
+      { 
+        adminNotes,
+        reviewedBy: req.user._id,
+        reviewedAt: new Date()
+      },
+      { new: true }
+    );
+
+    if (!transaction) {
+      return res.status(404).json({
+        success: false,
+        message: 'Transaction not found'
+      });
+    }
+
+    res.json({
+      success: true,
+      message: 'Notes added successfully',
+      transaction
+    });
+  } catch (error) {
+    console.error('Add notes error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to add notes'
+    });
+  }
+});
+
+// Get transaction statistics
+router.get('/transactions/stats/overview', adminAuth, async (req, res) => {
+  try {
+    const { startDate, endDate } = req.query;
+    
+    const dateFilter = {};
+    if (startDate || endDate) {
+      dateFilter.createdAt = {};
+      if (startDate) dateFilter.createdAt.$gte = new Date(startDate);
+      if (endDate) dateFilter.createdAt.$lte = new Date(endDate);
+    }
+
+    // Revenue by status
+    const revenueByStatus = await Transaction.aggregate([
+      { $match: dateFilter },
+      {
+        $group: {
+          _id: '$status',
+          count: { $sum: 1 },
+          totalAmount: { $sum: '$amount' }
+        }
+      }
+    ]);
+
+    // Top items
+    const topItems = await Transaction.aggregate([
+      { $match: { ...dateFilter, status: 'completed' } },
+      {
+        $group: {
+          _id: '$itemName',
+          count: { $sum: 1 },
+          totalRevenue: { $sum: '$amount' }
+        }
+      },
+      { $sort: { count: -1 } },
+      { $limit: 10 }
+    ]);
+
+    // Daily revenue (last 30 days)
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    
+    const dailyRevenue = await Transaction.aggregate([
+      { 
+        $match: { 
+          status: 'completed',
+          createdAt: { $gte: thirtyDaysAgo }
+        } 
+      },
+      {
+        $group: {
+          _id: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } },
+          revenue: { $sum: '$amount' },
+          count: { $sum: 1 }
+        }
+      },
+      { $sort: { _id: 1 } }
+    ]);
+
+    res.json({
+      success: true,
+      stats: {
+        revenueByStatus,
+        topItems,
+        dailyRevenue
+      }
+    });
+  } catch (error) {
+    console.error('Get transaction stats error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch transaction statistics'
     });
   }
 });
