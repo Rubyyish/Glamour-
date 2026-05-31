@@ -53,9 +53,14 @@ router.get('/:id', auth, async (req, res) => {
 // Create new wardrobe
 router.post('/', auth, async (req, res) => {
   try {
+    console.log('📝 Create wardrobe request received');
+    console.log('👤 User from auth middleware:', req.user?._id, req.user?.email);
+    
     const { name, description } = req.body;
+    console.log('📦 Request body:', { name, description });
 
     if (!name || !name.trim()) {
+      console.log('❌ Validation failed: name is required');
       return res.status(400).json({
         success: false,
         message: 'Wardrobe name is required'
@@ -70,6 +75,7 @@ router.post('/', auth, async (req, res) => {
     });
 
     await wardrobe.save();
+    console.log('✅ Wardrobe created successfully:', wardrobe._id);
 
     res.status(201).json({
       success: true,
@@ -77,10 +83,11 @@ router.post('/', auth, async (req, res) => {
       wardrobe
     });
   } catch (error) {
-    console.error('Create wardrobe error:', error);
+    console.error('❌ Create wardrobe error:', error);
     res.status(500).json({
       success: false,
-      message: 'Failed to create wardrobe'
+      message: 'Failed to create wardrobe',
+      error: error.message
     });
   }
 });
