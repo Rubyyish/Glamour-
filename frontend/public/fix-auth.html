@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fix Authentication</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+        .status {
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 10px;
+            font-weight: 600;
+        }
+        .error {
+            background: #fee2e2;
+            color: #991b1b;
+            border-left: 4px solid #ef4444;
+        }
+        .success {
+            background: #d1fae5;
+            color: #065f46;
+            border-left: 4px solid #10b981;
+        }
+        .warning {
+            background: #fef3c7;
+            color: #92400e;
+            border-left: 4px solid #f59e0b;
+        }
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            width: 100%;
+            margin: 10px 0;
+            transition: background 0.3s;
+        }
+        button:hover {
+            background: #5568d3;
+        }
+        button.danger {
+            background: #ef4444;
+        }
+        button.danger:hover {
+            background: #dc2626;
+        }
+        .info {
+            background: #f3f4f6;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            font-size: 14px;
+        }
+        .code {
+            background: #1f2937;
+            color: #10b981;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            margin: 15px 0;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 Fix Authentication</h1>
+        <p>This tool will help you fix the "session expired" issue</p>
+        
+        <div id="status"></div>
+        
+        <button onclick="checkToken()">1. Check Token Status</button>
+        <button onclick="clearAndReload()" class="danger">2. Clear Storage & Reload</button>
+        <button onclick="goToLogin()">3. Go to Login Page</button>
+        
+        <div class="info">
+            <strong>💡 Quick Fix:</strong><br>
+            1. Click "Clear Storage & Reload"<br>
+            2. Log in with your credentials<br>
+            3. Go to wardrobe - it will work!
+        </div>
+    </div>
+
+    <script>
+        function showStatus(message, type) {
+            const statusDiv = document.getElementById('status');
+            statusDiv.className = `status ${type}`;
+            statusDiv.innerHTML = message;
+        }
+
+        function checkToken() {
+            const token = localStorage.getItem('token');
+            const user = localStorage.getItem('user');
+            
+            if (!token) {
+                showStatus('❌ No token found!<br><br>You need to log in to get a token.<br>Click "Go to Login Page" below.', 'error');
+                return;
+            }
+            
+            try {
+                const parts = token.split('.');
+                if (parts.length !== 3) {
+                    showStatus('❌ Invalid token format!<br><br>Click "Clear Storage & Reload" to fix.', 'error');
+                    return;
+                }
+                
+                const payload = JSON.parse(atob(parts[1]));
+                const expiresAt = new Date(payload.exp * 1000);
+                const now = new Date();
+                const isExpired = now > expiresAt;
+                
+                if (isExpired) {
+                    const expiredAgo = Math.floor((now - expiresAt) / (1000 * 60 * 60 * 24));
+                    showStatus(
+                        `❌ Token EXPIRED!<br><br>` +
+                        `Expired: ${expiresAt.toLocaleString()}<br>` +
+                        `Expired ${expiredAgo} days ago<br><br>` +
+                        `<strong>Solution:</strong> Click "Clear Storage & Reload" then log in again.`,
+                        'error'
+                    );
+                } else {
+                    const daysLeft = Math.floor((expiresAt - now) / (1000 * 60 * 60 * 24));
+                    showStatus(
+                        `✅ Token is VALID!<br><br>` +
+                        `Expires: ${expiresAt.toLocaleString()}<br>` +
+                        `Days remaining: ${daysLeft}<br><br>` +
+                        `If wardrobe still doesn't work, check if backend is running.`,
+                        'success'
+                    );
+                }
+            } catch (e) {
+                showStatus(
+                    `❌ Error checking token!<br><br>` +
+                    `Error: ${e.message}<br><br>` +
+                    `Click "Clear Storage & Reload" to fix.`,
+                    'error'
+                );
+            }
+        }
+
+        function clearAndReload() {
+            if (confirm('This will clear all your login data. You will need to log in again. Continue?')) {
+                localStorage.clear();
+                sessionStorage.clear();
+                showStatus('✅ Storage cleared!<br><br>Reloading in 2 seconds...', 'success');
+                setTimeout(() => {
+                    window.location.href = '/login';
+                }, 2000);
+            }
+        }
+
+        function goToLogin() {
+            window.location.href = '/login';
+        }
+
+        // Auto-check on load
+        window.onload = () => {
+            checkToken();
+        };
+    </script>
+</body>
+</html>

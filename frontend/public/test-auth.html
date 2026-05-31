@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Auth Token Tester</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 30px;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            background: #f9f9f9;
+            border-radius: 5px;
+            border-left: 4px solid #667eea;
+        }
+        .test-section h3 {
+            margin-top: 0;
+            color: #667eea;
+        }
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            margin: 5px;
+        }
+        button:hover {
+            background: #5568d3;
+        }
+        .result {
+            margin-top: 15px;
+            padding: 15px;
+            background: white;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+        .success {
+            border-left: 4px solid #10b981;
+            color: #10b981;
+        }
+        .error {
+            border-left: 4px solid #ef4444;
+            color: #ef4444;
+        }
+        .info {
+            border-left: 4px solid #3b82f6;
+            color: #3b82f6;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔐 Authentication Token Tester</h1>
+        <p>Use this tool to diagnose authentication issues</p>
+
+        <div class="test-section">
+            <h3>1. Check Local Storage</h3>
+            <button onclick="checkLocalStorage()">Check Token & User</button>
+            <div id="localStorage-result"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>2. Decode JWT Token</h3>
+            <button onclick="decodeToken()">Decode Token</button>
+            <div id="decode-result"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>3. Test API Connection</h3>
+            <button onclick="testAPI()">Test /api/auth/me</button>
+            <button onclick="testWardrobe()">Test /api/wardrobe</button>
+            <div id="api-result"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>4. Clear Auth Data</h3>
+            <button onclick="clearAuth()" style="background: #ef4444;">Clear All Auth Data</button>
+            <div id="clear-result"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:3001/api';
+
+        function showResult(elementId, message, type = 'info') {
+            const element = document.getElementById(elementId);
+            element.innerHTML = `<div class="result ${type}">${message}</div>`;
+        }
+
+        function checkLocalStorage() {
+            const token = localStorage.getItem('token');
+            const user = localStorage.getItem('user');
+            
+            let result = '📦 Local Storage Contents:\n\n';
+            
+            if (token) {
+                result += `✅ Token exists\n`;
+                result += `Length: ${token.length} characters\n`;
+                result += `First 50 chars: ${token.substring(0, 50)}...\n\n`;
+            } else {
+                result += `❌ No token found\n\n`;
+            }
+            
+            if (user) {
+                result += `✅ User data exists\n`;
+                result += `Data: ${user}\n`;
+            } else {
+                result += `❌ No user data found\n`;
+            }
+            
+            showResult('localStorage-result', result, token && user ? 'success' : 'error');
+        }
+
+        function decodeToken() {
+            const token = localStorage.getItem('token');
+            
+            if (!token) {
+                showResult('decode-result', '❌ No token found in localStorage', 'error');
+                return;
+            }
+            
+            try {
+                const parts = token.split('.');
+                if (parts.length !== 3) {
+                    showResult('decode-result', '❌ Invalid token format (should have 3 parts)', 'error');
+                    return;
+                }
+                
+                const payload = JSON.parse(atob(parts[1]));
+                const issuedAt = new Date(payload.iat * 1000);
+                const expiresAt = new Date(payload.exp * 1000);
+                const now = new Date();
+                const isExpired = now > expiresAt;
+                
+                let result = '🔓 Token Decoded:\n\n';
+                result += `User ID: ${payload.userId}\n`;
+                result += `Issued: ${issuedAt.toLocaleString()}\n`;
+                result += `Expires: ${expiresAt.toLocaleString()}\n`;
+                result += `Status: ${isExpired ? '❌ EXPIRED' : '✅ Valid'}\n`;
+                result += `Time remaining: ${isExpired ? 'Expired' : Math.floor((expiresAt - now) / (1000 * 60 * 60 * 24)) + ' days'}\n`;
+                
+                showResult('decode-result', result, isExpired ? 'error' : 'success');
+            } catch (error) {
+                showResult('decode-result', `❌ Error decoding token: ${error.message}`, 'error');
+            }
+        }
+
+        async function testAPI() {
+            const token = localStorage.getItem('token');
+            
+            if (!token) {
+                showResult('api-result', '❌ No token found. Please log in first.', 'error');
+                return;
+            }
+            
+            showResult('api-result', '⏳ Testing API connection...', 'info');
+            
+            try {
+                const response = await fetch(`${API_URL}/auth/me`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                const data = await response.json();
+                
+                let result = `📡 API Test Results:\n\n`;
+                result += `Status: ${response.status} ${response.statusText}\n`;
+                result += `Response: ${JSON.stringify(data, null, 2)}\n`;
+                
+                showResult('api-result', result, response.ok ? 'success' : 'error');
+            } catch (error) {
+                showResult('api-result', `❌ API Error: ${error.message}\n\nMake sure backend is running on ${API_URL}`, 'error');
+            }
+        }
+
+        async function testWardrobe() {
+            const token = localStorage.getItem('token');
+            
+            if (!token) {
+                showResult('api-result', '❌ No token found. Please log in first.', 'error');
+                return;
+            }
+            
+            showResult('api-result', '⏳ Testing wardrobe API...', 'info');
+            
+            try {
+                const response = await fetch(`${API_URL}/wardrobe`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                const data = await response.json();
+                
+                let result = `👔 Wardrobe API Test:\n\n`;
+                result += `Status: ${response.status} ${response.statusText}\n`;
+                result += `Response: ${JSON.stringify(data, null, 2)}\n`;
+                
+                showResult('api-result', result, response.ok ? 'success' : 'error');
+            } catch (error) {
+                showResult('api-result', `❌ API Error: ${error.message}\n\nMake sure backend is running on ${API_URL}`, 'error');
+            }
+        }
+
+        function clearAuth() {
+            const confirmed = confirm('This will clear all authentication data. You will need to log in again. Continue?');
+            
+            if (confirmed) {
+                localStorage.removeItem('token');
+                localStorage.removeItem('user');
+                sessionStorage.clear();
+                
+                showResult('clear-result', '✅ All auth data cleared!\n\nYou can now close this page and log in again.', 'success');
+            }
+        }
+
+        // Auto-run check on load
+        window.onload = () => {
+            checkLocalStorage();
+        };
+    </script>
+</body>
+</html>
