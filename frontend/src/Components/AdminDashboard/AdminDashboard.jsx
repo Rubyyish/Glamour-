@@ -83,15 +83,37 @@ const AdminDashboard = () => {
     }
   };
 
-  const handleDeleteUser = async (userId, userName) => {
-    const confirmDelete = window.confirm(`Are you sure you want to delete user "${userName}"? This will also delete all their wardrobes and items.`);
+  const handleDeleteUser = async (userId, userName, userRole) => {
+    // Prevent deleting admin accounts
+    if (userRole === 'admin') {
+      toast.error('Cannot delete admin accounts');
+      return;
+    }
+    
+    const confirmDelete = window.confirm(
+      `⚠️ DELETE USER ACCOUNT\n\n` +
+      `User: ${userName}\n\n` +
+      `This will permanently delete:\n` +
+      `• User account\n` +
+      `• All wardrobes\n` +
+      `• All wardrobe items\n\n` +
+      `This action CANNOT be undone!\n\n` +
+      `Type the user's name to confirm deletion.`
+    );
     
     if (confirmDelete) {
+      const typedName = prompt(`Type "${userName}" to confirm deletion:`);
+      
+      if (typedName !== userName) {
+        toast.error('Name does not match. Deletion cancelled.');
+        return;
+      }
+      
       try {
         const response = await deleteUser(userId);
         
         if (response.success) {
-          toast.success('User deleted successfully');
+          toast.success(`User "${userName}" deleted successfully`);
           fetchData();
         }
       } catch (error) {
@@ -296,10 +318,10 @@ const AdminDashboard = () => {
                           </svg>
                         </button>
                         <button
-                          onClick={() => handleDeleteUser(user._id, user.name)}
+                          onClick={() => handleDeleteUser(user._id, user.name, user.role)}
                           className="action-btn delete-btn"
-                          title="Delete user"
-                          disabled={user._id === user._id}
+                          title={user.role === 'admin' ? 'Cannot delete admin accounts' : 'Delete user'}
+                          disabled={user.role === 'admin'}
                         >
                           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                             <polyline points="3 6 5 6 21 6"/>
