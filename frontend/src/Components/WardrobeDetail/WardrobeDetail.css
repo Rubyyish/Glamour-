@@ -300,29 +300,30 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  border-radius: 12px;
 }
 
 .item-image img {
   position: absolute;
-  top: 0;
-  left: 0;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
   min-width: 100%;
   min-height: 100%;
   width: 100%;
   height: 100%;
   object-fit: cover;
   object-position: center;
-  transform: scale(1.05);
 }
 
 .favorite-btn {
   position: absolute;
-  top: 0.5rem;
-  right: 0.5rem;
-  background: rgba(255, 255, 255, 0.9);
+  top: 0.75rem;
+  right: 0.75rem;
+  background: rgba(255, 255, 255, 0.95);
   border: none;
-  width: 36px;
-  height: 36px;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -330,12 +331,14 @@
   cursor: pointer;
   transition: all 0.2s ease;
   color: #999;
-  z-index: 2;
+  z-index: 3;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .favorite-btn:hover {
   background: white;
   transform: scale(1.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 .favorite-btn.active {
@@ -345,20 +348,20 @@
 
 .item-actions {
   position: absolute;
-  bottom: 0.5rem;
-  right: 0.5rem;
+  bottom: 0.75rem;
+  right: 0.75rem;
   display: flex;
   gap: 0.5rem;
   opacity: 1;
   transition: all 0.2s ease;
-  z-index: 2;
+  z-index: 3;
 }
 
 .edit-item-btn {
   background: rgba(59, 130, 246, 0.95);
   border: none;
-  width: 36px;
-  height: 36px;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -366,19 +369,20 @@
   cursor: pointer;
   transition: all 0.2s ease;
   color: white;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
 }
 
 .edit-item-btn:hover {
   background: #2563eb;
   transform: scale(1.1);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
 }
 
 .delete-item-btn {
   background: rgba(239, 68, 68, 0.95);
   border: none;
-  width: 36px;
-  height: 36px;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -386,12 +390,13 @@
   cursor: pointer;
   transition: all 0.2s ease;
   color: white;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3);
 }
 
 .delete-item-btn:hover {
   background: #dc2626;
   transform: scale(1.1);
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
 }
 
 .item-details {
