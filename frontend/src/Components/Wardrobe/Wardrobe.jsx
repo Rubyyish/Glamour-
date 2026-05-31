@@ -82,18 +82,21 @@ const Wardrobe = () => {
         const token = localStorage.getItem('token');
         console.error('🔒 401 Error - Token status:', token ? 'Exists' : 'Missing');
         
-        if (!token) {
-          toast.error('No authentication token found. Please log in again.');
-        } else {
-          toast.error('Session expired or invalid. Please log in again.');
-        }
+        // Close the modal first
+        setShowCreateModal(false);
+        
+        // Show appropriate error message
+        const errorMessage = error.response?.data?.message || 'Your session has expired';
+        toast.error(`${errorMessage}. Redirecting to login...`, {
+          autoClose: 3000,
+        });
         
         // Clear auth and redirect with session expired flag
         localStorage.removeItem('token');
         localStorage.removeItem('user');
         setTimeout(() => {
           window.location.href = '/login?sessionExpired=true';
-        }, 2000);
+        }, 3000);
       } else {
         toast.error(error.response?.data?.message || 'Failed to create wardrobe');
       }
