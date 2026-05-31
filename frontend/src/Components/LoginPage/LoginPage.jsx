@@ -13,7 +13,18 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const [errors, setErrors] = useState({});
+  const [showSessionExpiredBanner, setShowSessionExpiredBanner] = useState(false);
   const { login, loading } = useAuth();
+
+  // Check if user was redirected due to session expiry
+  React.useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('sessionExpired') === 'true') {
+      setShowSessionExpiredBanner(true);
+      // Clear the URL parameter
+      window.history.replaceState({}, '', '/login');
+    }
+  }, []);
 
   const validateForm = () => {
     const newErrors = {};
@@ -95,6 +106,44 @@ const Login = () => {
       {/* Right Panel - Login Form */}
       <div className="form-panel">
         <div className="form-container">
+          {/* Session Expired Banner */}
+          {showSessionExpiredBanner && (
+            <div style={{
+              background: '#fef3c7',
+              border: '1px solid #f59e0b',
+              borderRadius: '8px',
+              padding: '12px 16px',
+              marginBottom: '20px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '10px'
+            }}>
+              <span style={{ fontSize: '20px' }}>⚠️</span>
+              <div style={{ flex: 1 }}>
+                <p style={{ margin: 0, color: '#92400e', fontSize: '14px', fontWeight: '600' }}>
+                  Your session has expired
+                </p>
+                <p style={{ margin: '4px 0 0 0', color: '#92400e', fontSize: '13px' }}>
+                  Please log in again to continue. Your token expired after 7 days for security.
+                </p>
+              </div>
+              <button
+                onClick={() => setShowSessionExpiredBanner(false)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: '#92400e',
+                  fontSize: '20px',
+                  cursor: 'pointer',
+                  padding: '0',
+                  lineHeight: '1'
+                }}
+              >
+                ×
+              </button>
+            </div>
+          )}
+
           <div className="form-header">
             <h2 className="form-title">Login</h2>
           </div>

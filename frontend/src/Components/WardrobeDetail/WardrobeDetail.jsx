@@ -91,8 +91,20 @@ const WardrobeDetail = () => {
       }
     } catch (error) {
       console.error('Error fetching wardrobe:', error);
-      toast.error('Failed to load wardrobe');
-      navigate('/wardrobe');
+      
+      // Check if it's an auth error
+      if (error.response?.status === 401) {
+        toast.error('Session expired. Please log in again.');
+        // Clear auth and redirect
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        setTimeout(() => {
+          window.location.href = '/login';
+        }, 1500);
+      } else {
+        toast.error('Failed to load wardrobe');
+        navigate('/wardrobe');
+      }
     } finally {
       setLoading(false);
     }

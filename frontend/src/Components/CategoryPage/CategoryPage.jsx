@@ -3,6 +3,8 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { toast } from 'react-toastify';
 import { getAllWardrobes, addItemToWardrobe } from '../../api/wardrobeApi';
+import { getFavorites, toggleFavorite } from '../../api/favoritesApi';
+import { handleImageError, getImageWithFallback } from '../../utils/imagePlaceholder';
 import DynamicLensAR from '../DynamicLensAR/DynamicLensAR';
 import './CategoryPage.css';
 
@@ -18,6 +20,7 @@ const CategoryPage = () => {
   const [addingToWardrobe, setAddingToWardrobe] = useState(false);
   const [showARTryOn, setShowARTryOn] = useState(false);
   const [arItem, setArItem] = useState(null);
+  const [favorites, setFavorites] = useState([]);
 
   const handleItemClick = (item) => {
     setSelectedItem(item);
@@ -49,7 +52,53 @@ const CategoryPage = () => {
 
   useEffect(() => {
     fetchWardrobes();
+    fetchFavorites();
   }, [category]);
+
+  const fetchFavorites = async () => {
+    try {
+      const response = await getFavorites();
+      if (response.success) {
+        setFavorites(response.favorites || []);
+      }
+    } catch (error) {
+      console.error('Error fetching favorites:', error);
+      // Don't show error for favorites - it's not critical
+      // Just log it and continue
+      if (error.response?.status === 401) {
+        console.warn('Auth required for favorites');
+      }
+    }
+  };
+
+  const handleToggleFavorite = async (item, e) => {
+    e.stopPropagation();
+    try {
+      const itemData = {
+        itemId: item.id.toString(),
+        name: item.name,
+        imageUrl: item.image,
+        category: item.category,
+        price: item.price,
+        brand: item.brand || '',
+        description: item.description || ''
+      };
+
+      const response = await toggleFavorite(itemData);
+      
+      if (response.success) {
+        setFavorites(response.favorites || []);
+        toast.success(response.message);
+      }
+    } catch (error) {
+      console.error('Error toggling favorite:', error);
+      toast.error('Failed to update favorites');
+    }
+  };
+
+  const isFavorite = (itemId) => {
+    return favorites.some(fav => fav.itemId === itemId.toString());
+  };
 
   const fetchWardrobes = async () => {
     try {
@@ -896,7 +945,20 @@ const CategoryPage = () => {
           {currentCategory.items.map(item => (
             <div key={item.id} className="category-item-card" onClick={() => handleItemClick(item)}>
               <div className="category-item-image">
-                <img src={item.image} alt={item.name} />
+                <img 
+                  src={getImageWithFallback(item.image, 'clothing')} 
+                  alt={item.name}
+                  onError={(e) => handleImageError(e, 'clothing')}
+                />
+                <button 
+                  className={`favorite-btn ${isFavorite(item.id) ? 'active' : ''}`}
+                  onClick={(e) => handleToggleFavorite(item, e)}
+                  aria-label="Add to favorites"
+                >
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill={isFavorite(item.id) ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2">
+                    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+                  </svg>
+                </button>
                 <span className={`status-badge status-${item.status || 'resell'}`}>
                   {(item.status || 'resell').toUpperCase()}
                 </span>

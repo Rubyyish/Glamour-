@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { toast } from 'react-toastify';
 import { getAllWardrobes, addItemToWardrobe } from '../../api/wardrobeApi';
+import { getFavorites, toggleFavorite } from '../../api/favoritesApi';
+import { handleImageError, getImageWithFallback } from '../../utils/imagePlaceholder';
 import LensStudioAR from '../LensStudioAR/LensStudioAR';
 import './Collections.css';
 
@@ -17,6 +19,7 @@ const Collections = () => {
   const [wardrobes, setWardrobes] = useState([]);
   const [loadingWardrobes, setLoadingWardrobes] = useState(false);
   const [addingToWardrobe, setAddingToWardrobe] = useState(false);
+  const [favorites, setFavorites] = useState([]);
 
   const handleItemClick = (item) => {
     setSelectedItem(item);
@@ -48,6 +51,7 @@ const Collections = () => {
 
   useEffect(() => {
     fetchWardrobes();
+    fetchFavorites();
   }, []);
 
   const fetchWardrobes = async () => {
@@ -62,6 +66,51 @@ const Collections = () => {
     } finally {
       setLoadingWardrobes(false);
     }
+  };
+
+  const fetchFavorites = async () => {
+    try {
+      const response = await getFavorites();
+      if (response.success) {
+        setFavorites(response.favorites || []);
+      }
+    } catch (error) {
+      console.error('Error fetching favorites:', error);
+      // Don't show error for favorites - it's not critical
+      // Just log it and continue
+      if (error.response?.status === 401) {
+        console.warn('Auth required for favorites');
+      }
+    }
+  };
+
+  const handleToggleFavorite = async (item, e) => {
+    e.stopPropagation();
+    try {
+      const itemData = {
+        itemId: item.id.toString(),
+        name: item.name,
+        imageUrl: item.image,
+        category: item.category,
+        price: item.price,
+        brand: item.brand || '',
+        description: item.description || ''
+      };
+
+      const response = await toggleFavorite(itemData);
+      
+      if (response.success) {
+        setFavorites(response.favorites || []);
+        toast.success(response.message);
+      }
+    } catch (error) {
+      console.error('Error toggling favorite:', error);
+      toast.error('Failed to update favorites');
+    }
+  };
+
+  const isFavorite = (itemId) => {
+    return favorites.some(fav => fav.itemId === itemId.toString());
   };
 
   const handleAddToWardrobe = async (wardrobeId) => {
@@ -102,15 +151,26 @@ const Collections = () => {
     if (!selectedItem) return;
 
     try {
+      // Get auth token from localStorage
+      const token = localStorage.getItem('token');
+      
+      if (!token) {
+        toast.error('Please log in to make a purchase');
+        navigate('/login');
+        return;
+      }
+
       const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/payment/create-checkout-session`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
         },
         body: JSON.stringify({
           itemName: selectedItem.name,
           itemPrice: selectedItem.price,
           itemImage: selectedItem.image.startsWith('http') ? selectedItem.image : `${window.location.origin}${selectedItem.image}`,
+          itemCategory: selectedItem.category,
         }),
       });
 
@@ -119,7 +179,7 @@ const Collections = () => {
       if (data.url) {
         window.location.href = data.url;
       } else {
-        toast.error('Failed to initiate payment');
+        toast.error(data.error || 'Failed to initiate payment');
       }
     } catch (error) {
       console.error('Error creating checkout session:', error);
@@ -382,7 +442,20 @@ const Collections = () => {
           {featuredProducts.map(product => (
             <div key={product.id} className="featured-product-card" onClick={() => handleItemClick(product)}>
               <div className="featured-product-image">
-                <img src={product.image} alt={product.name} />
+                <img 
+                  src={getImageWithFallback(product.image, 'clothing')} 
+                  alt={product.name}
+                  onError={(e) => handleImageError(e, 'clothing')}
+                />
+                <button 
+                  className={`favorite-btn ${isFavorite(product.id) ? 'active' : ''}`}
+                  onClick={(e) => handleToggleFavorite(product, e)}
+                  aria-label="Add to favorites"
+                >
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill={isFavorite(product.id) ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2">
+                    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+                  </svg>
+                </button>
               </div>
               <div className="featured-product-info">
                 <h3>{product.name}</h3>
