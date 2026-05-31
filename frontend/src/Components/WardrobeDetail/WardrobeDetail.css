@@ -311,7 +311,7 @@
 .favorite-btn {
   position: absolute;
   top: 0.5rem;
-  left: 0.5rem;
+  right: 0.5rem;
   background: rgba(255, 255, 255, 0.9);
   border: none;
   width: 36px;
@@ -338,55 +338,53 @@
 
 .item-actions {
   position: absolute;
-  top: 0.5rem;
+  bottom: 0.5rem;
   right: 0.5rem;
   display: flex;
   gap: 0.5rem;
-  opacity: 0;
+  opacity: 1;
   transition: all 0.2s ease;
   z-index: 2;
 }
 
-.item-card:hover .item-actions {
-  opacity: 1;
-}
-
 .edit-item-btn {
-  background: rgba(255, 255, 255, 0.9);
+  background: rgba(59, 130, 246, 0.95);
   border: none;
-  width: 32px;
-  height: 32px;
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   transition: all 0.2s ease;
-  color: #666;
+  color: white;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
 
 .edit-item-btn:hover {
-  background: #1a1a1a;
-  color: white;
+  background: #2563eb;
+  transform: scale(1.1);
 }
 
 .delete-item-btn {
-  background: rgba(255, 255, 255, 0.9);
+  background: rgba(239, 68, 68, 0.95);
   border: none;
-  width: 32px;
-  height: 32px;
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   transition: all 0.2s ease;
-  color: #dc3545;
+  color: white;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
 
 .delete-item-btn:hover {
-  background: #dc3545;
-  color: white;
+  background: #dc2626;
+  transform: scale(1.1);
 }
 
 .item-details {

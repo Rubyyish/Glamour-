@@ -20,6 +20,7 @@ const Collections = () => {
   const [loadingWardrobes, setLoadingWardrobes] = useState(false);
   const [addingToWardrobe, setAddingToWardrobe] = useState(false);
   const [favorites, setFavorites] = useState([]);
+  const [isEditMode, setIsEditMode] = useState(false);
 
   const handleItemClick = (item) => {
     setSelectedItem(item);
@@ -184,6 +185,38 @@ const Collections = () => {
     } catch (error) {
       console.error('Error creating checkout session:', error);
       toast.error('Failed to process payment. Please try again.');
+    }
+  };
+
+  const handleDeleteItem = () => {
+    if (!selectedItem) return;
+
+    const confirmDelete = window.confirm(`Are you sure you want to delete "${selectedItem.name}"? This action cannot be undone.`);
+    
+    if (confirmDelete) {
+      // For now, just show a success message
+      // In a real app, you would call an API to delete the item
+      toast.success(`"${selectedItem.name}" has been deleted`);
+      setSelectedItem(null);
+      
+      // TODO: Implement actual delete API call
+      // Example:
+      // await deleteCollectionItem(selectedItem.id);
+    }
+  };
+
+  const handleDeleteCard = (product, e) => {
+    e.stopPropagation();
+    
+    const confirmDelete = window.confirm(`Are you sure you want to delete "${product.name}"? This action cannot be undone.`);
+    
+    if (confirmDelete) {
+      toast.success(`"${product.name}" has been deleted`);
+      
+      // TODO: Implement actual delete API call and remove from state
+      // Example:
+      // await deleteCollectionItem(product.id);
+      // setFeaturedProducts(prev => prev.filter(p => p.id !== product.id));
     }
   };
 
@@ -448,19 +481,29 @@ const Collections = () => {
                   onError={(e) => handleImageError(e, 'clothing')}
                 />
                 <button 
+                  className="delete-card-btn"
+                  onClick={(e) => handleDeleteCard(product, e)}
+                  aria-label="Delete item"
+                >
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <polyline points="3 6 5 6 21 6"/>
+                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                  </svg>
+                </button>
+                <button 
                   className={`favorite-btn ${isFavorite(product.id) ? 'active' : ''}`}
                   onClick={(e) => handleToggleFavorite(product, e)}
                   aria-label="Add to favorites"
                 >
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill={isFavorite(product.id) ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill={isFavorite(product.id) ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2">
                     <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
                   </svg>
                 </button>
               </div>
               <div className="featured-product-info">
                 <h3>{product.name}</h3>
-                <p className="featured-product-price">{product.price}</p>
-                <button className="featured-product-btn" onClick={(e) => { e.stopPropagation(); handleItemClick(product); }}>VIEW ITEM</button>
+                <p className="featured-product-category">{product.category}</p>
+                <p className="featured-product-brand">{product.brand}</p>
               </div>
             </div>
           ))}
@@ -618,6 +661,28 @@ const Collections = () => {
                         <polyline points="17 2 12 7 7 2"/>
                       </svg>
                       Try with AR
+                    </button>
+                    <button 
+                      className="fullpage-action-btn fullpage-edit-btn"
+                      onClick={() => setIsEditMode(!isEditMode)}
+                    >
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                      </svg>
+                      {isEditMode ? 'Cancel Edit' : 'Edit Item'}
+                    </button>
+                    <button 
+                      className="fullpage-action-btn fullpage-delete-btn"
+                      onClick={handleDeleteItem}
+                    >
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <polyline points="3 6 5 6 21 6"/>
+                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                        <line x1="10" y1="11" x2="10" y2="17"/>
+                        <line x1="14" y1="11" x2="14" y2="17"/>
+                      </svg>
+                      Delete Item
                     </button>
                     <button 
                       className="fullpage-action-btn fullpage-buy-btn"
